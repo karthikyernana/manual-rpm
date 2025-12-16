@@ -1,26 +1,20 @@
 import { useState } from 'react';
 import { Settings as SettingsIcon, Clipboard, Users, Database, FileText } from 'lucide-react';
 import Navbar from '../components/Navbar';
-
-// Import page components without their navbars
-const TemplatesContent = () => {
-  // We'll create a version without navbar
-  return <div>Templates content will go here</div>;
-};
-
-const UsersContent = () => {
-  return <div>Users content will go here</div>;
-};
+import TemplatesContent from './templates/TemplatesContent';
+import AdminUsersContent from './admin/AdminUsersContent';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('templates');
 
   const tabs = [
-    { id: 'templates', name: 'Vitals Templates', icon: Clipboard },
-    { id: 'users', name: 'User Management', icon: Users },
-    { id: 'system', name: 'System Settings', icon: Database },
-    { id: 'audit', name: 'Audit Logs', icon: FileText },
+    { id: 'templates', name: 'Vitals Templates', icon: Clipboard, component: TemplatesContent },
+    { id: 'users', name: 'User Management', icon: Users, component: AdminUsersContent },
+    { id: 'system', name: 'System Settings', icon: Database, component: null },
+    { id: 'audit', name: 'Audit Logs', icon: FileText, component: null },
   ];
+
+  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -64,32 +58,29 @@ const SettingsPage = () => {
 
         {/* Tab Content */}
         <div className="animate-fadeIn">
-          <div className="card text-center py-12">
-            <div className="mb-4">
-              {tabs.find(t => t.id === activeTab)?.icon && (
-                <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
-                  {(() => {
-                    const Icon = tabs.find(t => t.id === activeTab)?.icon;
-                    return Icon ? <Icon size={32} className="text-primary-600" /> : null;
-                  })()}
-                </div>
-              )}
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {tabs.find(t => t.id === activeTab)?.name}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {activeTab === 'templates' && 'Access Templates from the main menu temporarily'}
-              {activeTab === 'users' && 'Access User Management from the admin menu temporarily'}
-              {activeTab === 'system' && 'System configuration coming soon!'}
-              {activeTab === 'audit' && 'Audit logging feature coming soon!'}
-            </p>
-            {(activeTab === 'templates' || activeTab === 'users') && (
-              <p className="text-sm text-gray-500">
-                We're reorganizing the navigation. These features are still accessible via the old routes.
+          {ActiveComponent ? (
+            <ActiveComponent />
+          ) : (
+            <div className="card text-center py-12">
+              <div className="mb-4">
+                {tabs.find(t => t.id === activeTab)?.icon && (
+                  <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
+                    {(() => {
+                      const Icon = tabs.find(t => t.id === activeTab)?.icon;
+                      return Icon ? <Icon size={32} className="text-primary-600" /> : null;
+                    })()}
+                  </div>
+                )}
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {tabs.find(t => t.id === activeTab)?.name}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {activeTab === 'system' && 'System configuration coming soon!'}
+                {activeTab === 'audit' && 'Audit logging feature coming soon!'}
               </p>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

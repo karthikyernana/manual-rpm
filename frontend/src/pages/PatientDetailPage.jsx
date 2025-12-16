@@ -170,12 +170,12 @@ const PatientDetailPage = () => {
 
     try {
       await api.delete(`/vitals/${vitalId}`);
-      toast.success('✅ Vital record deleted successfully');  
+      toast.success('Vital record deleted successfully');  
       fetchVitals(); // Refresh the list
     } catch (error) {
       console.error('Error deleting vital:', error);
       const errorMsg = error.response?.data?.message || 'Failed to delete vital record';
-      toast.error(`❌ ${errorMsg}`);
+      toast.error(`${errorMsg}`);
     }
   };
 

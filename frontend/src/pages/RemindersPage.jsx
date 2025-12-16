@@ -60,7 +60,7 @@ const RemindersPage = () => {
     e.preventDefault();
     try {
       await api.post('/reminders', formData);
-      toast.success('✅ Reminder created successfully!');
+      toast.success('Reminder created successfully!');
       fetchReminders();
       setShowModal(false);
       setFormData({
@@ -75,7 +75,8 @@ const RemindersPage = () => {
       });
     } catch (error) {
       const errorMsg = error.response?.data?.message || 'Failed to create reminder';
-      toast.error(`❌ ${errorMsg}`);    }
+      toast.error(errorMsg);
+    }
   };
 
   const handleSnooze = async (id) => {
