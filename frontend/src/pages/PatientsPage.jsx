@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEff ect } from 'react';
 import { Link } from 'react-router-dom';
 import { Stethoscope, Search, Plus } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -10,7 +10,6 @@ const PatientsPage = () => {
   const [search, setSearch] = useState('');
   const [ward, setWard] = useState('');
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 });
-  const { logout } = useAuth();
 
   const fetchPatients = async (page = 1) => {
     try {
@@ -50,34 +49,16 @@ const PatientsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="text-2xl font-bold text-primary-600">
-                Manual-RPM
-              </Link>
-              <Link to="/patients" className="text-gray-900 font-medium">
-                Patients
-              </Link>
-            </div>
-            <div className="flex items-center">
-              <button onClick={logout} className="btn-secondary">
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Patients</h1>
-            <Link to="/patients/new" className="btn-primary">
-              + Add Patient
-            </Link>
-          </div>
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Patients</h1>
+          <Link to="/patients/new" className="btn-primary flex items-center space-x-2">
+            <Plus size={18} />
+            <span>Add Patient</span>
+          </Link>
+        </div>
 
           {/* Search and Filters */}
           <div className="card mb-6">
