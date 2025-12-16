@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import PatientsPage from './pages/PatientsPage';
 import PatientFormPage from './pages/PatientFormPage';
+import PatientDetailPage from './pages/PatientDetailPage';
 
 function App() {
   return (
@@ -43,6 +44,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PatientFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients/:id"
+            element={
+              <ProtectedRoute>
+                <PatientDetailPage />
               </ProtectedRoute>
             }
           />
