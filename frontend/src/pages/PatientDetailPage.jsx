@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import { Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
@@ -163,6 +164,20 @@ const PatientDetailPage = () => {
     return <div className="min-h-screen flex items-center justify-center">Patient not found</div>;
   }
 
+  const handleDeleteVital = async (vitalId) => {
+    if (!confirm('Delete this vital record? This action cannot be undone.')) return;
+
+    try {
+      await api.delete(`/vitals/${vitalId}`);
+      alert('✅ Vital record deleted successfully');  
+      fetchVitals(); // Refresh the list
+    } catch (error) {
+      console.error('Error deleting vital:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to delete vital record';
+      alert(`❌ ${errorMsg}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -273,23 +288,32 @@ const PatientDetailPage = () => {
           ) : (
             <div className="space-y-4">
               {vitals.map((vital) => (
-                <div key={vital._id} className={`border rounded-lg p-4 ${vital.flagged ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {new Date(vital.recordedAt).toLocaleString()}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Recorded by: {vital.recordedBy?.name}
-                      </p>
+                <div key={vital._id} className="bg-white p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:shadow-md">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <p className="text-sm text-gray-600">{new Date(vital.recordedAt).toLocaleString()}</p>
+                      {vital.flagged && (
+                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
+                          ⚠️ Flagged
+                        </span>
+                      )}
                     </div>
-                    {vital.flagged && (
-                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
-                        ⚠️ Flagged
-                      </span>
+                    {vital.recordedBy && (
+                      <p className="text-xs text-gray-500">
+                        Recorded by: {vital.recordedBy.name} ({vital.recordedBy.role})
+                      </p>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  <button
+                    onClick={() => handleDeleteVital(vital._id)}
+                    className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors"
+                    title="Delete this vital record"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                     {Object.entries(vital.vitals).map(([key, value]) => (
                       <div key={key} className={vital.flaggedFields?.some(f => f.field === key) ? 'text-red-700 font-semibold' : ''}>
                         <span className="text-gray-600">{key}: </span>
