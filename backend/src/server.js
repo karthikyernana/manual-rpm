@@ -29,6 +29,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Routes
+const authRoutes = require('./routes/auth.routes');
+app.use('/api/v1/auth', authRoutes);
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
