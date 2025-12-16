@@ -1,17 +1,42 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Plus } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import Modal from '../components/Modal';
 import api from '../services/api';
 
 const RemindersPage = () => {
   const [reminders, setReminders] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [filter, setFilter] = useState('pending');
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({
+    patient: '',
+    title: '',
+    description: '',
+    type: 'custom',
+    priority: 'medium',
+    dueDate: '',
+    customTime: '',
+    recurrence: 'none'
+  });
 
   useEffect(() => {
     fetchReminders();
-  }, [filter]);
+    fetchPatients();
+  }, []);
+
+  const fetchPatients = async () => {
+    try {
+      const response = await api.get('/patients?limit=100');
+      if (response.data.success) {
+        setPatients(response.data.data.patients);
+      }
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+    }
+  };
 
   const fetchReminders = async () => {
     try {
@@ -27,6 +52,29 @@ const RemindersPage = () => {
       console.error('Error fetching reminders:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateReminder = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/reminders', formData);
+      alert('✅ Reminder created successfully!');
+      fetchReminders();
+      setShowModal(false);
+      setFormData({
+        patient: '',
+        title: '',
+        description: '',
+        type: 'custom',
+        priority: 'medium',
+        dueDate: '',
+        customTime: '',
+        recurrence: 'none'
+      });
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || 'Failed to create reminder';
+      alert(`❌ ${errorMsg}`);
     }
   };
 
@@ -77,7 +125,19 @@ const RemindersPage = () => {
       <Navbar />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Reminders</h1>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Reminders</h1>
+            <p className="text-gray-600 mt-1">Manage patient reminders and tasks</p>
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Plus size={18} />
+            <span>Create Reminder</span>
+          </button>
+        </div>
 
         {/* Filter Tabs */}
         <div className="mb-6 flex space-x-2 overflow-x-auto">
@@ -175,6 +235,154 @@ const RemindersPage = () => {
           </div>
         )}
       </main>
+
+      {/* Create Reminder Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title="Create New Reminder"
+        size="md"
+      >
+        <form onSubmit={handleCreateReminder} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Patient*
+            </label>
+            <select
+              required
+              className="input-field"
+              value={formData.patient}
+              onChange={(e) => setFormData({ ...formData, patient: e.target.value })}
+            >
+              <option value="">Select patient...</option>
+              {patients.map(patient => (
+                <option key={patient._id} value={patient._id}>
+                  {patient.name} - {patient.mrn}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Title*
+            </label>
+            <input
+              type="text"
+              required
+              className="input-field"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="e.g., Take medication"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              className="input-field"
+              rows="2"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Additional details..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Type*
+              </label>
+              <select
+                required
+                className="input-field"
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              >
+                <option value="custom">Custom</option>
+                <option value="vitals_due">Vitals Due</option>
+                <option value="medication">Medication</option>
+                <option value="appointment">Appointment</option>
+                <option value="follow_up">Follow Up</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Priority*
+              </label>
+              <select
+                required
+                className="input-field"
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Due Date*
+              </label>
+              <input
+                type="date"
+                required
+                className="input-field"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Time (Optional)
+              </label>
+              <input
+                type="time"
+                className="input-field"
+                value={formData.customTime}
+                onChange={(e) => setFormData({ ...formData, customTime: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Recurrence
+            </label>
+            <select
+              className="input-field"
+              value={formData.recurrence}
+              onChange={(e) => setFormData({ ...formData, recurrence: e.target.value })}
+            >
+              <option value="none">None (One-time)</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+
+          <div className="flex space-x-4 pt-4">
+            <button type="submit" className="btn-primary flex-1">
+              Create Reminder
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
