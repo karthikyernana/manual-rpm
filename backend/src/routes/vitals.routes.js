@@ -260,4 +260,34 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// @route   DELETE /api/v1/vitals/:id
+// @desc    Delete a vital record
+// @access  Private (doctors, nurses, admins only)
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const vital = await Vitals.findById(req.params.id);
+
+    if (!vital) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vital record not found'
+      });
+    }
+
+    await vital.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Vital record deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete vital error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting vital record',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
