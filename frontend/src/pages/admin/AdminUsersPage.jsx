@@ -3,6 +3,7 @@ import { Trash2, UserPlus, Shield, Stethoscope, Briefcase, Edit } from 'lucide-r
 import Navbar from '../../components/Navbar';
 import Modal from '../../components/Modal';
 import api from '../../services/api';
+import toast from '../../utils/toast';
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -31,7 +32,7 @@ const AdminUsersPage = () => {
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      alert('Failed to fetch users');
+      toast.error('Failed to delete user');
     } finally {
       setLoading(false);
     }
@@ -54,16 +55,14 @@ const AdminUsersPage = () => {
         }
         const response = await api.put(`/auth/users/${editingUser._id}`, updateData);
         if (response.data.success) {
-          alert('✅ User updated successfully!');
-          fetchUsers();
+          toast.success('✅ User updated successfully!');          fetchUsers();
           handleCloseModal();
         }
       } else {
         // Create new user
         const response = await api.post('/auth/register', formData);
         if (response.data.success) {
-          alert(`✅ ${formData.role} account created successfully!`);
-          fetchUsers();
+          toast.success(`✅ ${formData.role} account created successfully!`);          fetchUsers();
           handleCloseModal();
         }
       }
@@ -97,8 +96,7 @@ const AdminUsersPage = () => {
 
     try {
       await api.delete(`/auth/users/${id}`);
-      alert('✅ User deleted successfully');
-      fetchUsers();
+      toast.success('User deleted successfully');      fetchUsers();
     } catch (error) {
       const errorMsg = error.response?.data?.message || 'Failed to delete user';
       alert(`❌ ${errorMsg}`);

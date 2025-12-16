@@ -4,6 +4,7 @@ import { Clock, CheckCircle, XCircle, Plus } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Modal from '../components/Modal';
 import api from '../services/api';
+import toast from '../utils/toast';
 
 const RemindersPage = () => {
   const [reminders, setReminders] = useState([]);
@@ -59,7 +60,7 @@ const RemindersPage = () => {
     e.preventDefault();
     try {
       await api.post('/reminders', formData);
-      alert('✅ Reminder created successfully!');
+      toast.success('✅ Reminder created successfully!');
       fetchReminders();
       setShowModal(false);
       setFormData({
@@ -74,8 +75,7 @@ const RemindersPage = () => {
       });
     } catch (error) {
       const errorMsg = error.response?.data?.message || 'Failed to create reminder';
-      alert(`❌ ${errorMsg}`);
-    }
+      toast.error(`❌ ${errorMsg}`);    }
   };
 
   const handleSnooze = async (id) => {
