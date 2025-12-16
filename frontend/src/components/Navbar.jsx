@@ -62,12 +62,6 @@ const Navbar = () => {
               <SettingsIcon size={18} />
               <span>Settings</span>
             </Link>
-              {user?.role === 'admin' && (
-                <Link to="/admin/users" className={navLinkClass('/admin/users')}>
-                  <UserPlus size={18} />
-                  <span>Manage Users</span>
-                </Link>
-              )}
             </div>
           </div>
           
