@@ -1,11 +1,25 @@
+```css
 @import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 @import './animations.css';
 
 @layer base {
+  /* Better font rendering */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Body defaults */
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply text-gray-900 bg-gray-50;
   }
 }
 

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -17,6 +18,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Toaster position="top-right" />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           {/* Public registration DISABLED - Admin only creates users */}
