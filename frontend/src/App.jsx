@@ -10,6 +10,7 @@ import PatientDetailPage from './pages/PatientDetailPage';
 import AlertsPage from './pages/AlertsPage';
 import RemindersPage from './pages/RemindersPage';
 import PublicPatientView from './pages/PublicPatientView';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
 
 function App() {
   return (
@@ -17,7 +18,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          {/* Public registration DISABLED - Admin only creates users */}
+          <Route path="/register" element={<Navigate to="/login" replace />} />
           <Route path="/share/:token" element={<PublicPatientView />} />
           <Route
             path="/dashboard"
@@ -72,6 +74,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <RemindersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <AdminUsersPage />
               </ProtectedRoute>
             }
           />
