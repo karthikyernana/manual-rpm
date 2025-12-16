@@ -9,7 +9,6 @@ import { generatePDF, downloadCSV } from '../utils/export';
 
 const PatientDetailPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   
   const [patient, setPatient] = useState(null);
   const [vitals, setVitals] = useState([]);
