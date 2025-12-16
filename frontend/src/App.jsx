@@ -9,6 +9,7 @@ import PatientFormPage from './pages/PatientFormPage';
 import PatientDetailPage from './pages/PatientDetailPage';
 import AlertsPage from './pages/AlertsPage';
 import RemindersPage from './pages/RemindersPage';
+import PublicPatientView from './pages/PublicPatientView';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/share/:token" element={<PublicPatientView />} />
           <Route
             path="/dashboard"
             element={

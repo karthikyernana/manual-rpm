@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../services/api';
+import SharePatientModal from '../components/SharePatientModal';
+import { generatePDF, downloadCSV } from '../utils/export';
 
 const PatientDetailPage = () => {
   const { id } = useParams();
@@ -11,12 +13,15 @@ const PatientDetailPage = () => {
   const [vitals, setVitals] = useState([]);
   const [template, setTemplate] = useState(null);
   const [showVitalsForm, setShowVitalsForm] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [trendData, setTrendData] = useState([]);
 
   useEffect(() => {
     fetchPatient();
     fetchVitals();
+    fetchTrends();
   }, [id]);
 
   const fetchPatient = async () => {
@@ -53,6 +58,21 @@ const PatientDetailPage = () => {
       }
     } catch (error) {
       console.error('Error fetching vitals:', error);
+    }
+  };
+
+  const fetchTrends = async () => {
+    try {
+      const response = await api.get(`/vitals/patient/${id}/trends?days=7`);
+      if (response.data.success) {
+        const data = response.data.data.vitals.map(v => ({
+          date: new Date(v.recordedAt).toLocaleDateString(),
+          ...v.vitals
+        }));
+        setTrendData(data.reverse());
+      }
+    } catch (error) {
+      console.error('Error fetching trends:', error);
     }
   };
 
@@ -94,6 +114,7 @@ const PatientDetailPage = () => {
       if (response.data.success) {
         // Reset form and refresh
         fetchVitals();
+        fetchTrends();
         setShowVitalsForm(false);
         
         // Reset form data
@@ -109,6 +130,27 @@ const PatientDetailPage = () => {
       console.error('Error recording vitals:', error);
       const errorMsg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Failed to record vitals';
       alert(`❌ ${errorMsg}`);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const response = await api.get(`/export/patient/${id}/data`);
+      if (response.data.success) {
+        await generatePDF(response.data.data, response.data.data.vitals);
+      }
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Failed to export PDF');
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      await downloadCSV(id);
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      alert('Failed to export CSV');
     }
   };
 
@@ -144,8 +186,11 @@ const PatientDetailPage = () => {
               <p className="text-gray-600 mt-1">MRN: {patient.mrn} • {patient.gender} • {new Date(patient.dob).toLocaleDateString()}</p>
               <p className="text-gray-600">Ward: {patient.ward} {patient.bed && `- Bed ${patient.bed}`}</p>
             </div>
-            <div className="flex space-x-2">
-              <Link to={`/patients/${id}/edit`} className="btn-secondary">Edit Patient</Link>
+            <div className="flex flex-wrap gap-2">
+              <Link to={`/patients/${id}/edit`} className="btn-secondary">Edit</Link>
+              <button onClick={() => setShowShareModal(true)} className="btn-secondary">📤 Share</button>
+              <button onClick={handleExportPDF} className="btn-secondary">📄 PDF</button>
+              <button onClick={handleExportCSV} className="btn-secondary">📊 CSV</button>
               <button onClick={() => setShowVitalsForm(!showVitalsForm)} className="btn-primary">
                 {showVitalsForm ? 'Cancel' : '+ Record Vitals'}
               </button>
@@ -200,6 +245,32 @@ const PatientDetailPage = () => {
           </div>
         )}
 
+
+        {/* Trend Chart */}
+        {trendData.length > 0 && (
+          <div className="card mb-6">
+            <h2 className="text-xl font-semibold mb-4">7-Day Vitals Trend</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                {template && template.fields.filter(f => f.unit !== 'boolean').map((field, index) => (
+                  <Line
+                    key={field.name}
+                    type="monotone"
+                    dataKey={field.name}
+                    stroke={`hsl(${index * 60}, 70%, 50%)`}
+                    name={field.label}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
         {/* Vitals History */}
         <div className="card">
           <h2 className="text-xl font-semibold mb-4">Vitals History</h2>
@@ -238,6 +309,14 @@ const PatientDetailPage = () => {
           )}
         </div>
       </main>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <SharePatientModal
+          patient={patient}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </div>
   );
 };
