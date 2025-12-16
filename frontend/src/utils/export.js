@@ -1,12 +1,12 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const generatePDF = async (patient, vitals) => {
   const doc = new jsPDF();
   
   // Header
   doc.setFontSize(20);
-  doc.setTextColor(37, 99, 235); // primary-600
+  doc.setTextColor(37, 99, 235);
   doc.text('Manual-RPM Patient Report', 20, 20);
   
   doc.setFontSize(10);
@@ -28,7 +28,7 @@ export const generatePDF = async (patient, vitals) => {
     ['Primary Nurse', patient.primaryNurse?.name || 'N/A']
   ];
   
-  doc.autoTable({
+  autoTable(doc, {
     startY: 45,
     head: [],
     body: patientInfo,
@@ -47,7 +47,6 @@ export const generatePDF = async (patient, vitals) => {
   doc.text('Vitals History', 20, finalY);
   
   if (vitals && vitals.length > 0) {
-    // Get all vital fields
     const allFields = new Set();
     vitals.forEach(v => {
       Object.keys(v.vitals).forEach(key => allFields.add(key));
@@ -64,18 +63,13 @@ export const generatePDF = async (patient, vitals) => {
       return row;
     });
     
-    doc.autoTable({
+    autoTable(doc, {
       startY: finalY + 5,
       head: [headers],
       body: rows,
       theme: 'striped',
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [37, 99, 235] },
-      didDrawCell: (data) => {
-        if (data.column.index === headers.length - 1 && data.cell.raw === 'Yes') {
-          doc.setTextColor(220, 38, 38); // red for flagged
-        }
-      }
+      headStyles: { fillColor: [37, 99, 235] }
     });
   } else {
     doc.setFontSize(10);
@@ -97,7 +91,6 @@ export const generatePDF = async (patient, vitals) => {
     );
   }
   
-  // Save
   doc.save(`${patient.name}_report_${Date.now()}.pdf`);
 };
 
