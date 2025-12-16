@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import Navbar from '../components/Navbar';
 import api from '../services/api';
 import SharePatientModal from '../components/SharePatientModal';
 import { generatePDF, downloadCSV } from '../utils/export';
@@ -164,19 +165,12 @@ const PatientDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="text-2xl font-bold text-primary-600">Manual-RPM</Link>
-              <Link to="/patients" className="text-gray-600 hover:text-gray-900">Patients</Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <button onClick={() => navigate('/patients')} className="text-primary-600 mb-4">← Back to Patients</button>
+        <Link to="/patients" className="text-primary-600 hover:text-primary-800 mb-4 inline-block">
+          ← Back to Patients
+        </Link>
         
         {/* Patient Info Header */}
         <div className="card mb-6">

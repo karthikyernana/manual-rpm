@@ -120,29 +120,6 @@ const DashboardPage = () => {
             </Link>
           </div>
         </div>
-
-        {/* System Info */}
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">System Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-gray-600">Version</p>
-              <p className="font-medium">v0.3.0-rc (Day 3 Complete)</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Your Role</p>
-              <p className="font-medium capitalize">{user?.role}</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Status</p>
-              <p className="font-medium text-green-600">✓ All Systems Operational</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Environment</p>
-              <p className="font-medium">Development</p>
-            </div>
-          </div>
-        </div>
       </main>
     </div>
   );
