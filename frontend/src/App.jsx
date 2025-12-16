@@ -4,6 +4,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import PatientsPage from './pages/PatientsPage';
+import PatientFormPage from './pages/PatientFormPage';
 
 function App() {
   return (
@@ -17,6 +19,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients"
+            element={
+              <ProtectedRoute>
+                <PatientsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients/new"
+            element={
+              <ProtectedRoute>
+                <PatientFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients/:id/edit"
+            element={
+              <ProtectedRoute>
+                <PatientFormPage />
               </ProtectedRoute>
             }
           />
