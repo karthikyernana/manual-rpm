@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
+import Modal from '../components/Modal';
 import api from '../services/api';
 import SharePatientModal from '../components/SharePatientModal';
 import { generatePDF, downloadCSV } from '../utils/export';
@@ -201,19 +202,13 @@ const PatientDetailPage = () => {
               <button onClick={handleExportCSV} className="btn-secondary">📊 CSV</button>
               <button onClick={() => setShowVitalsForm(!showVitalsForm)} className="btn-primary">
                 {showVitalsForm ? 'Cancel' : 'Record Vitals'}
+              <button onClick={() => setShowVitalsForm(true)} className="btn-primary">
+                Record Vitals
               </button>
             </div>
           </div>
         </div>
 
-        {/* Vitals Entry Form */}
-        {showVitalsForm && template && (
-          <div className="card mb-6">
-            <h2 className="text-xl font-semibold mb-4">Record Vitals ({template.name} Template)</h2>
-            <form onSubmit={handleSubmitVitals}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {template.fields.map(field => (
-                  <div key={field.name}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       {field.label}
                     </label>
