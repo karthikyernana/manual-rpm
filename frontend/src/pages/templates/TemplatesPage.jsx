@@ -3,12 +3,16 @@ import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Modal from '../../components/Modal';
 import api from '../../services/api';
+import toast from '../../utils/toast';
+import { validators, sanitizeInput } from '../../utils/validation';
 
 const TemplatesPage = () => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState({});
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -61,6 +65,35 @@ const TemplatesPage = () => {
       newFields[index][field] = value;
     }
     setFormData({ ...formData, fields: newFields });
+
+    // Validate field in real-time
+    const newFieldErrors = { ...fieldErrors };
+    const fieldKey = `field-${index}-${field}`;
+    
+    if (field === 'name') {
+      const error = validators.fieldName(value);
+      if (error) {
+        newFieldErrors[fieldKey] = error;
+      } else {
+        delete newFieldErrors[fieldKey];
+      }
+    } else if (field === 'label') {
+      const error = validators.required(value);
+      if (error) {
+        newFieldErrors[fieldKey] = error;
+      } else {
+        delete newFieldErrors[fieldKey];
+      }
+    } else if (field === 'unit') {
+      const error = validators.unit(value);
+      if (error) {
+        newFieldErrors[fieldKey] = error;
+      } else {
+        delete newFieldErrors[fieldKey];
+      }
+    }
+    
+    setFieldErrors(newFieldErrors);
   };
 
   const handleRemoveField = (index) => {
@@ -72,19 +105,70 @@ const TemplatesPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    const errors = {};
+    if (!formData.name || !formData.name.trim()) {
+      errors.name = 'Template name is required';
+    }
+    if (formData.fields.length === 0) {
+      errors.fields = 'At least one field is required';
+    }
+    
+    // Validate each field
+    formData.fields.forEach((field, index) => {
+      if (!field.name || !field.name.trim()) {
+        errors[`field-${index}-name`] = 'Field name is required';
+      } else {
+        const nameError = validators.fieldName(field.name);
+        if (nameError) errors[`field-${index}-name`] = nameError;
+      }
+      
+      if (!field.label || !field.label.trim()) {
+        errors[`field-${index}-label`] = 'Field label is required';
+      }
+      
+      if (!field.unit || !field.unit.trim()) {
+        errors[`field-${index}-unit`] = 'Unit is required';
+      } else {
+        const unitError = validators.unit(field.unit);
+        if (unitError) errors[`field-${index}-unit`] = unitError;
+      }
+    });
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setFieldErrors(errors);
+      toast.error('Please fix validation errors before submitting');
+      return;
+    }
+    
+    // Sanitize inputs
+    const sanitizedData = {
+      ...formData,
+      name: sanitizeInput(formData.name),
+      description: sanitizeInput(formData.description),
+      fields: formData.fields.map(field => ({
+        ...field,
+        name: sanitizeInput(field.name),
+        label: sanitizeInput(field.label),
+        unit: sanitizeInput(field.unit),
+      }))
+    };
+    
     try {
       if (editingTemplate) {
-        await api.put(`/templates/${editingTemplate._id}`, formData);
-        alert('✅ Template updated successfully!');
+        await api.put(`/templates/${editingTemplate._id}`, sanitizedData);
+        toast.success('Template updated successfully!');
       } else {
-        await api.post('/templates', formData);
-        alert('✅ Template created successfully!');
+        await api.post('/templates', sanitizedData);
+        toast.success('Template created successfully!');
       }
       fetchTemplates();
       handleCloseModal();
     } catch (error) {
       const errorMsg = error.response?.data?.message || 'Failed to save template';
-      alert(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
     }
   };
 
@@ -105,17 +189,19 @@ const TemplatesPage = () => {
     
     try {
       await api.delete(`/templates/${id}`);
-      alert('✅ Template deleted successfully!');
+      toast.success('Template deleted successfully!');
       fetchTemplates();
     } catch (error) {
       const errorMsg = error.response?.data?.message || 'Failed to delete template';
-      alert(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
     }
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingTemplate(null);
+    setFormErrors({});
+    setFieldErrors({});
     setFormData({
       name: '',
       description: '',
@@ -220,11 +306,20 @@ const TemplatesPage = () => {
               <input
                 type="text"
                 required
-                className="input-field"
+                className={`input-field ${formErrors.name ? 'border-red-500' : ''}`}
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (formErrors.name) {
+                    const { name, ...rest } = formErrors;
+                    setFormErrors(rest);
+                  }
+                }}
                 placeholder="e.g., Hypertension Monitoring"
               />
+              {formErrors.name && (
+                <p className="text-xs text-red-600 mt-1">{formErrors.name}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -257,6 +352,12 @@ const TemplatesPage = () => {
               placeholder="Brief description of this template"
             />
           </div>
+
+          {formErrors.fields && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-800">{formErrors.fields}</p>
+            </div>
+          )}
 
           <div className="border-t pt-4">
             <div className="flex justify-between items-center mb-3">
