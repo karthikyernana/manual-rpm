@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Share2, FileText, FileSpreadsheet, AlertTriangle, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../services/api';
 import SharePatientModal from '../components/SharePatientModal';
@@ -188,10 +189,20 @@ const PatientDetailPage = () => {
             </div>
             <div className="flex flex-wrap gap-2">
               <Link to={`/patients/${id}/edit`} className="btn-secondary">Edit</Link>
-              <button onClick={() => setShowShareModal(true)} className="btn-secondary">📤 Share</button>
-              <button onClick={handleExportPDF} className="btn-secondary">📄 PDF</button>
-              <button onClick={handleExportCSV} className="btn-secondary">📊 CSV</button>
-              <button onClick={() => setShowVitalsForm(!showVitalsForm)} className="btn-primary">
+              <button onClick={() => setShowShareModal(true)} className="btn-secondary flex items-center space-x-2">
+                <Share2 size={16} />
+                <span>Share</span>
+              </button>
+              <button onClick={handleExportPDF} className="btn-secondary flex items-center space-x-2">
+                <FileText size={16} />
+                <span>PDF</span>
+              </button>
+              <button onClick={handleExportCSV} className="btn-secondary flex items-center space-x-2">
+                <FileSpreadsheet size={16} />
+                <span>CSV</span>
+              </button>
+              <button onClick={() => setShowVitalsForm(!showVitalsForm)} className="btn-primary flex items-center space-x-2">
+                <Plus size={16} />
                 {showVitalsForm ? 'Cancel' : '+ Record Vitals'}
               </button>
             </div>
@@ -291,7 +302,7 @@ const PatientDetailPage = () => {
                     </div>
                     {vital.flagged && (
                       <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
-                        ⚠️ Flagged
+                        <AlertTriangle size={16} className="inline mr-1" /> Flagged
                       </span>
                     )}
                   </div>

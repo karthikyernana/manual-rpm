@@ -1,6 +1,8 @@
+```javascript
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Stethoscope, Search, Plus, User } from 'lucide-react'; // Added User icon for consistency
+import Navbar from '../components/Navbar';
 import api from '../services/api';
 
 const PatientsPage = () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { PlusCircle, ClipboardList, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
@@ -98,14 +99,17 @@ const DashboardPage = () => {
         <div className="card mb-6">
           <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/patients/new" className="btn-primary text-center">
-              ➕ Add New Patient
+            <Link to="/patients/new" className="btn-primary text-center flex items-center justify-center space-x-2">
+              <PlusCircle size={18} />
+              <span>Add New Patient</span>
             </Link>
-            <Link to="/patients" className="btn-secondary text-center">
-              📋 View All Patients
+            <Link to="/patients" className="btn-secondary text-center flex items-center justify-center space-x-2">
+              <ClipboardList size={18} />
+              <span>View All Patients</span>
             </Link>
-            <Link to="/alerts" className="btn-secondary text-center">
-              🚨 Check Alerts
+            <Link to="/alerts" className="btn-secondary text-center flex items-center justify-center space-x-2">
+              <Bell size={18} />
+              <span>Check Alerts</span>
             </Link>
           </div>
         </div>
