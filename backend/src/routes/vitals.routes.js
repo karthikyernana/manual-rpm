@@ -75,9 +75,6 @@ router.post(
         });
       }
 
-      // Get template to validate fields
-      const templateDef = Vitals.getTemplate(template);
-      
       // Create vitals record
       const vitalsRecord = await Vitals.create({
         patient,
@@ -86,6 +83,24 @@ router.post(
         notes,
         recordedBy: req.user._id
       });
+
+      // If vitals are flagged, create an alert
+      if (vitalsRecord.flagged && vitalsRecord.flaggedFields.length > 0) {
+        const Alert = require('../models/Alert');
+        
+        const severity = Alert.calculateSeverity(vitalsRecord.flaggedFields);
+        
+        const fieldsList = vitalsRecord.flaggedFields.map(f => f.field).join(', ');
+        const message = `Abnormal vitals detected: ${fieldsList}`;
+        
+        await Alert.create({
+          patient,
+          vitals: vitalsRecord._id,
+          severity,
+          message,
+          flaggedFields: vitalsRecord.flaggedFields
+        });
+      }
 
       await vitalsRecord.populate([
         { path: 'patient', select: 'name mrn ward' },
