@@ -93,9 +93,9 @@ vitalsSchema.index({ patient: 1, recordedAt: -1 });
 vitalsSchema.index({ flagged: 1, recordedAt: -1 });
 
 // Pre-save hook to check for flagged values
-vitalsSchema.pre('save', function(next) {
+vitalsSchema.pre('save', async function() {
   const template = VITAL_TEMPLATES[this.template];
-  if (!template) return next();
+  if (!template) return;
 
   this.flagged = false;
   this.flaggedFields = [];
@@ -119,8 +119,6 @@ vitalsSchema.pre('save', function(next) {
       });
     }
   });
-
-  next();
 });
 
 // Static method to get template definition
