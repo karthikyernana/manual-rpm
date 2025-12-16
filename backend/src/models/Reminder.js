@@ -21,8 +21,16 @@ const reminderSchema = new mongoose.Schema({
   },
   dueDate: {
     type: Date,
-    required: true,
-    index: true
+    required: true
+  },
+  customTime: {
+    type: String, // Format: "HH:MM" (24-hour)
+    default: null
+  },
+  recurrence: {
+    type: String,
+    enum: ['none', 'daily', 'weekly', 'monthly'],
+    default: 'none'
   },
   status: {
     type: String,
