@@ -1,73 +1,134 @@
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Navbar from '../components/Navbar';
+import api from '../services/api';
 
 const DashboardPage = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    activeAlerts: 0,
+    pendingReminders: 0,
+    todayVitals: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      // Fetch counts from API
+      const [patientsRes, alertsRes, remindersRes] = await Promise.all([
+        api.get('/patients?limit=1'),
+        api.get('/alerts?status=active&limit=1'),
+        api.get('/reminders?status=pending&limit=1')
+      ]);
+
+      setStats({
+        totalPatients: patientsRes.data.data.pagination?.total || 0,
+        activeAlerts: alertsRes.data.data.pagination?.total || 0,
+        pendingReminders: remindersRes.data.data.pagination?.total || 0,
+        todayVitals: 0 // Could be enhanced with actual count
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const StatCard = ({ title, value, link, color = 'primary' }) => (
+    <Link to={link} className={`block p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow border-l-4 border-${color}-600`}>
+      <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
+      <p className={`text-3xl font-bold text-${color}-600`}>{value}</p>
+    </Link>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <h1 className="text-2xl font-bold text-primary-600">Manual-RPM</h1>
-              <Link to="/patients" className="text-gray-600 hover:text-gray-900 font-medium">
-                Patients
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">
-                Welcome, <span className="font-medium">{user?.name}</span>
-              </span>
-              <button
-                onClick={logout}
-                className="btn-secondary"
-              >
-                Logout
-              </button>
-            </div>
+      <Navbar />
+
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {user?.name}! 👋
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Here's your overview for today
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        {loading ? (
+          <div className="text-center py-12">Loading dashboard...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard 
+              title="Total Patients" 
+              value={stats.totalPatients} 
+              link="/patients"
+              color="blue"
+            />
+            <StatCard 
+              title="Active Alerts" 
+              value={stats.activeAlerts} 
+              link="/alerts"
+              color="red"
+            />
+            <StatCard 
+              title="Pending Reminders" 
+              value={stats.pendingReminders} 
+              link="/reminders"
+              color="yellow"
+            />
+            <StatCard 
+              title="Vitals Today" 
+              value={stats.todayVitals} 
+              link="/patients"
+              color="green"
+            />
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <div className="card mb-6">
+          <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link to="/patients/new" className="btn-primary text-center">
+              ➕ Add New Patient
+            </Link>
+            <Link to="/patients" className="btn-secondary text-center">
+              📋 View All Patients
+            </Link>
+            <Link to="/alerts" className="btn-secondary text-center">
+              🚨 Check Alerts
+            </Link>
           </div>
         </div>
-      </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="card">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Dashboard</h2>
-            <div className="space-y-4">
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                <h3 className="font-medium text-primary-900 mb-2">✅ Day 1 Complete!</h3>
-                <p className="text-sm text-primary-700">
-                  Authentication system working perfectly.
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="text-sm font-medium text-gray-500">Name</div>
-                  <div className="mt-1 text-lg font-semibold text-gray-900">{user?.name}</div>
-                </div>
-                
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="text-sm font-medium text-gray-500">Email</div>
-                  <div className="mt-1 text-lg font-semibold text-gray-900">{user?.email}</div>
-                </div>
-                
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="text-sm font-medium text-gray-500">Role</div>
-                  <div className="mt-1 text-lg font-semibold text-gray-900 capitalize">{user?.role}</div>
-                </div>
-              </div>
-
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h4 className="font-medium text-green-900 mb-2">🚀 Day 2 In Progress!</h4>
-                <p className="text-sm text-green-700 mb-3">
-                  Patient Management system is being built. Navigate to Patients to start managing patient records.
-                </p>
-                <Link to="/patients" className="btn-primary inline-block">
-                  Go to Patients →
-                </Link>
-              </div>
+        {/* System Info */}
+        <div className="card">
+          <h2 className="text-xl font-bold mb-4">System Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-gray-600">Version</p>
+              <p className="font-medium">v0.3.0-rc (Day 3 Complete)</p>
+            </div>
+            <div>
+              <p className="text-gray-600">Your Role</p>
+              <p className="font-medium capitalize">{user?.role}</p>
+            </div>
+            <div>
+              <p className="text-gray-600">Status</p>
+              <p className="font-medium text-green-600">✓ All Systems Operational</p>
+            </div>
+            <div>
+              <p className="text-gray-600">Environment</p>
+              <p className="font-medium">Development</p>
             </div>
           </div>
         </div>

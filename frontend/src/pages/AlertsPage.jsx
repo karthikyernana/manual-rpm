@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import Navbar from '../components/Navbar';
 
 const AlertsPage = () => {
   const [alerts, setAlerts] = useState([]);
@@ -62,17 +63,7 @@ const AlertsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="text-2xl font-bold text-primary-600">Manual-RPM</Link>
-              <Link to="/patients" className="text-gray-600 hover:text-gray-900">Patients</Link>
-              <Link to="/alerts" className="text-gray-900 font-medium">Alerts</Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Alerts Dashboard</h1>
