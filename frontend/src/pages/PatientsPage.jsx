@@ -1,4 +1,4 @@
-import { useState, useEff ect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Stethoscope, Search, Plus } from 'lucide-react';
 import Navbar from '../components/Navbar';
