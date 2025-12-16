@@ -1,7 +1,6 @@
-```javascript
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Stethoscope, Search, Plus, User } from 'lucide-react'; // Added User icon for consistency
+import { Stethoscope, Search, Plus } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 
