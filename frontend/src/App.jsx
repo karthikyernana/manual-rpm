@@ -11,6 +11,7 @@ import AlertsPage from './pages/AlertsPage';
 import RemindersPage from './pages/RemindersPage';
 import PublicPatientView from './pages/PublicPatientView';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
+import TemplatesPage from './pages/templates/TemplatesPage';
 
 function App() {
   return (
@@ -82,6 +83,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/templates"
+            element={
+              <ProtectedRoute>
+                <TemplatesPage />
               </ProtectedRoute>
             }
           />
