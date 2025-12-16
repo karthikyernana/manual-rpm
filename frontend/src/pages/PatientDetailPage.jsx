@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
 import Modal from '../components/Modal';
-import api from '../services/api';
 import SharePatientModal from '../components/SharePatientModal';
 import { generatePDF, downloadCSV } from '../utils/export';
+import toast from '../utils/toast';
+import api from '../services/api';
 
 const PatientDetailPage = () => {
   const { id } = useParams();
@@ -143,7 +144,7 @@ const PatientDetailPage = () => {
       }
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      alert('Failed to export PDF');
+      toast.error('Failed to export PDF');
     }
   };
 
@@ -152,7 +153,7 @@ const PatientDetailPage = () => {
       await downloadCSV(id);
     } catch (error) {
       console.error('Error exporting CSV:', error);
-      alert('Failed to export CSV');
+      toast.error('Failed to export CSV');
     }
   };
 
@@ -169,12 +170,12 @@ const PatientDetailPage = () => {
 
     try {
       await api.delete(`/vitals/${vitalId}`);
-      alert('✅ Vital record deleted successfully');  
+      toast.success('✅ Vital record deleted successfully');  
       fetchVitals(); // Refresh the list
     } catch (error) {
       console.error('Error deleting vital:', error);
       const errorMsg = error.response?.data?.message || 'Failed to delete vital record';
-      alert(`❌ ${errorMsg}`);
+      toast.error(`❌ ${errorMsg}`);
     }
   };
 

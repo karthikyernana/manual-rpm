@@ -6,8 +6,7 @@ import {
   Bell, 
   LogOut,
   User as UserIcon,
-  UserPlus,
-  Clipboard
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -59,9 +58,9 @@ const Navbar = () => {
               <Bell size={18} />
               <span>Reminders</span>
             </Link>
-            <Link to="/templates" className={navLinkClass('/templates')}>
-              <Clipboard size={18} />
-              <span>Templates</span>
+            <Link to="/settings" className={navLinkClass('/settings')}>
+              <SettingsIcon size={18} />
+              <span>Settings</span>
             </Link>
               {user?.role === 'admin' && (
                 <Link to="/admin/users" className={navLinkClass('/admin/users')}>

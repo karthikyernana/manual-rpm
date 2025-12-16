@@ -11,8 +11,7 @@ import PatientDetailPage from './pages/PatientDetailPage';
 import AlertsPage from './pages/AlertsPage';
 import RemindersPage from './pages/RemindersPage';
 import PublicPatientView from './pages/PublicPatientView';
-import AdminUsersPage from './pages/admin/AdminUsersPage';
-import TemplatesPage from './pages/templates/TemplatesPage';
+import SettingsPage from './pages/SettingsPage';
 
 function App() {
   return (
@@ -81,18 +80,10 @@ function App() {
             }
           />
           <Route
-            path="/admin/users"
+            path="/settings"
             element={
               <ProtectedRoute>
-                <AdminUsersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/templates"
-            element={
-              <ProtectedRoute>
-                <TemplatesPage />
+                <SettingsPage />
               </ProtectedRoute>
             }
           />
