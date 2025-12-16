@@ -35,12 +35,16 @@ const patientRoutes = require('./routes/patient.routes');
 const vitalsRoutes = require('./routes/vitals.routes');
 const alertRoutes = require('./routes/alert.routes');
 const reminderRoutes = require('./routes/reminder.routes');
+const shareRoutes = require('./routes/share.routes');
+const exportRoutes = require('./routes/export.routes');
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/patients', patientRoutes);
 app.use('/api/v1/vitals', vitalsRoutes);
 app.use('/api/v1/alerts', alertRoutes);
 app.use('/api/v1/reminders', reminderRoutes);
+app.use('/api/v1/share', shareRoutes);
+app.use('/api/v1/export', exportRoutes);
 
 // Start schedulers
 const { startSchedulers } = require('./services/scheduler');
