@@ -208,11 +208,12 @@ router.get('/users', protect, authorize('admin'), async (req, res) => {
 router.put('/users/:id', protect, authorize('admin'), [
   body('name').optional().notEmpty().withMessage('Name cannot be empty'),
   body('email').optional().isEmail().withMessage('Invalid email'),
+  body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').optional().isIn(['nurse', 'doctor', 'admin']).withMessage('Invalid role'),
   body('phone').optional()
 ], validate, async (req, res) => {
   try {
-    const { name, email, role, phone } = req.body;
+    const { name, email, password, role, phone } = req.body;
     
     const user = await User.findById(req.params.id);
 
@@ -237,6 +238,7 @@ router.put('/users/:id', protect, authorize('admin'), [
     // Update fields
     if (name) user.name = name;
     if (email) user.email = email;
+    if (password) user.password = password; // Will be hashed by pre-save hook
     if (role) user.role = role;
     if (phone !== undefined) user.phone = phone;
 

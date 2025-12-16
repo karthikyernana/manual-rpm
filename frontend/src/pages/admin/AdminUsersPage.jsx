@@ -9,6 +9,7 @@ const AdminUsersPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
+  const [showPasswordField, setShowPasswordField] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,12 +42,17 @@ const AdminUsersPage = () => {
     try {
       if (editingUser) {
         // Update existing user
-        const response = await api.put(`/auth/users/${editingUser._id}`, {
+        const updateData = {
           name: formData.name,
           email: formData.email,
           role: formData.role,
           phone: formData.phone
-        });
+        };
+        // Only include password if it was changed
+        if (formData.password) {
+          updateData.password = formData.password;
+        }
+        const response = await api.put(`/auth/users/${editingUser._id}`, updateData);
         if (response.data.success) {
           alert('✅ User updated successfully!');
           fetchUsers();
@@ -82,6 +88,7 @@ const AdminUsersPage = () => {
   const handleCloseModal = () => {
     setShowForm(false);
     setEditingUser(null);
+    setShowPasswordField(false);
     setFormData({ name: '', email: '', password: '', role: 'nurse', phone: '' });
   };
 
@@ -221,7 +228,35 @@ const AdminUsersPage = () => {
               placeholder="john@hospital.com"
             />
           </div>
-          {!editingUser && (
+          {editingUser ? (
+            <>
+              <div className="col-span-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordField(!showPasswordField)}
+                  className="text-sm text-primary-600 hover:text-primary-800"
+                >
+                  {showPasswordField ? '− Hide' : '+ Change Password'}
+                </button>
+              </div>
+              {showPasswordField && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New Password (Optional)
+                  </label>
+                  <input
+                    type="password"
+                    minLength={6}
+                    className="input-field"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Min 6 characters"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Leave blank to keep current password</p>
+                </div>
+              )}
+            </>
+          ) : (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Password*
