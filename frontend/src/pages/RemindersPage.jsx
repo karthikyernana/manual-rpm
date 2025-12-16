@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, CheckCircle, XCircle, Snooze } from 'lucide-react';
+import { Clock, CheckCircle, XCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 
