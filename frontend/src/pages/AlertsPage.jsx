@@ -103,16 +103,22 @@ const AlertsPage = () => {
 
         {/* Alerts List */}
         {loading ? (
-          <div className="text-center py-12">Loading alerts...</div>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading alerts...</p>
+          </div>
         ) : alerts.length === 0 ? (
           <div className="card text-center py-12">
             <p className="text-gray-600">No alerts found</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {alerts.map((alert) => (
-              <div key={alert._id} className={`border rounded-lg p-4 ${getSeverityColor(alert.severity)}`}>
-                <div className="flex justify-between items-start mb-3">
+            {alerts.map((alert, index) => (
+              <div
+                key={alert._id}
+                className={`card hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${getSeverityColor(alert.severity)}`}
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >  <div className="flex justify-between items-start mb-3">
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="px-2 py-1 bg-white rounded text-xs font-semibold uppercase">

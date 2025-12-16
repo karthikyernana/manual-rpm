@@ -99,7 +99,8 @@ const PatientsPage = () => {
         {/* Patients List */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="text-gray-600">Loading patients...</div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading patients...</p>
           </div>
         ) : patients.length === 0 ? (
           <div className="card text-center py-12">
@@ -110,8 +111,12 @@ const PatientsPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {patients.map((patient) => (
-              <div key={patient._id} className="card hover:shadow-md transition-shadow">
+            {patients.map((patient, index) => (
+              <div 
+                key={patient._id} 
+                className="card hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{patient.name}</h3>
