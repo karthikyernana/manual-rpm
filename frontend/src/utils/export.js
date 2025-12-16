@@ -1,9 +1,7 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-export const generatePDF = async (patientData, vitalsData) => {
-  const { patient, vitals } = patientData;
-  
+export const generatePDF = async (patient, vitals) => {
   const doc = new jsPDF();
   
   // Header
@@ -105,11 +103,20 @@ export const generatePDF = async (patientData, vitalsData) => {
 
 export const downloadCSV = async (patientId) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/export/patient/${patientId}/csv`, {
+    const token = localStorage.getItem('token');
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    
+    const response = await fetch(`${apiUrl}/export/patient/${patientId}/csv`, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'text/csv'
       }
     });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download CSV');
+    }
     
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);

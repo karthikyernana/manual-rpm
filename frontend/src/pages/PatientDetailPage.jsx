@@ -137,7 +137,7 @@ const PatientDetailPage = () => {
     try {
       const response = await api.get(`/export/patient/${id}/data`);
       if (response.data.success) {
-        await generatePDF(response.data.data, response.data.data.vitals);
+        await generatePDF(response.data.data.patient, response.data.data.vitals);
       }
     } catch (error) {
       console.error('Error exporting PDF:', error);
