@@ -200,8 +200,6 @@ const PatientDetailPage = () => {
               <button onClick={() => setShowShareModal(true)} className="btn-secondary">📤 Share</button>
               <button onClick={handleExportPDF} className="btn-secondary">📄 PDF</button>
               <button onClick={handleExportCSV} className="btn-secondary">📊 CSV</button>
-              <button onClick={() => setShowVitalsForm(!showVitalsForm)} className="btn-primary">
-                {showVitalsForm ? 'Cancel' : 'Record Vitals'}
               <button onClick={() => setShowVitalsForm(true)} className="btn-primary">
                 Record Vitals
               </button>
@@ -209,6 +207,13 @@ const PatientDetailPage = () => {
           </div>
         </div>
 
+        {/* Record Vitals Modal */}
+        {showVitalsForm && (
+          <Modal isOpen={showVitalsForm} onClose={() => setShowVitalsForm(false)} title="Record New Vitals">
+            <form onSubmit={handleSubmitVitals}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {template && template.fields.map(field => (
+                  <div key={field.name}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       {field.label}
                     </label>
@@ -245,7 +250,7 @@ const PatientDetailPage = () => {
                 <button type="button" onClick={() => setShowVitalsForm(false)} className="btn-secondary">Cancel</button>
               </div>
             </form>
-          </div>
+          </Modal>
         )}
 
 
@@ -321,6 +326,63 @@ const PatientDetailPage = () => {
           )}
         </div>
       </main>
+
+      {/* Vitals Entry Modal */}
+      {showVitalsForm && template && (
+        <Modal 
+          isOpen={showVitalsForm} 
+          onClose={() => setShowVitalsForm(false)}
+          title={`Record Vitals (${template.name} Template)`}
+          size="lg"
+        >
+          <form onSubmit={handleSubmitVitals}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {template.fields.map(field => (
+                <div key={field.name}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {field.label}
+                  </label>
+                  {field.unit === 'boolean' ? (
+                    <select
+                      name={field.name}
+                      className="input-field"
+                      value={formData[field.name]}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Select...</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="number"
+                      name={field.name}
+                      step="0.1"
+                      min={field.min}
+                      max={field.max}
+                      className="input-field"
+                      value={formData[field.name]}
+                      onChange={handleInputChange}
+                      placeholder={field.normal ? `Normal: ${field.normal.min}-${field.normal.max}` : ''}
+                    />
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">{field.unit}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex space-x-4">
+              <button type="submit" className="btn-primary flex-1">Save Vitals</button>
+              <button 
+                type="button" 
+                onClick={() => setShowVitalsForm(false)} 
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {/* Share Modal */}
       {showShareModal && (
