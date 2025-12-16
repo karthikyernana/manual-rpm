@@ -127,12 +127,12 @@ const PatientDetailPage = () => {
         });
         setFormData(initialData);
         
-        alert('✅ Vitals recorded successfully!');
+        toast.success('Vitals recorded successfully!');
       }
     } catch (error) {
       console.error('Error recording vitals:', error);
       const errorMsg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Failed to record vitals';
-      alert(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
     }
   };
 
