@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Trash2, UserPlus, Shield, Stethoscope, Briefcase } from 'lucide-react';
+import { Trash2, UserPlus, Shield, Stethoscope, Briefcase, Edit } from 'lucide-react';
 import Navbar from '../../components/Navbar';
+import Modal from '../../components/Modal';
 import api from '../../services/api';
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,17 +39,50 @@ const AdminUsersPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/auth/register', formData);
-      if (response.data.success) {
-        alert(`✅ ${formData.role} account created successfully!`);
-        fetchUsers();
-        setShowForm(false);
-        setFormData({ name: '', email: '', password: '', role: 'nurse', phone: '' });
+      if (editingUser) {
+        // Update existing user
+        const response = await api.put(`/auth/users/${editingUser._id}`, {
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          phone: formData.phone
+        });
+        if (response.data.success) {
+          alert('✅ User updated successfully!');
+          fetchUsers();
+          handleCloseModal();
+        }
+      } else {
+        // Create new user
+        const response = await api.post('/auth/register', formData);
+        if (response.data.success) {
+          alert(`✅ ${formData.role} account created successfully!`);
+          fetchUsers();
+          handleCloseModal();
+        }
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || 'Failed to create user';
+      const errorMsg = error.response?.data?.message || `Failed to ${editingUser ? 'update' : 'create'} user`;
       alert(`❌ ${errorMsg}`);
     }
+  };
+
+  const handleEdit = (user) => {
+    setEditingUser(user);
+    setFormData({
+      name: user.name,
+      email: user.email,
+      password: '',
+      role: user.role,
+      phone: user.phone || ''
+    });
+    setShowForm(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowForm(false);
+    setEditingUser(null);
+    setFormData({ name: '', email: '', password: '', role: 'nurse', phone: '' });
   };
 
   const handleDelete = async (id, user) => {
@@ -92,111 +127,24 @@ const AdminUsersPage = () => {
             <p className="text-gray-600 mt-1">Manage nurses, doctors, and admin accounts</p>
           </div>
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => setShowForm(true)}
             className="btn-primary flex items-center space-x-2"
           >
             <UserPlus size={18} />
-            <span>{showForm ? 'Cancel' : 'Add User'}</span>
+            <span>Add User</span>
           </button>
         </div>
 
-        {/* Create User Form */}
-        {showForm && (
-          <div className="card mb-6 bg-blue-50 border-l-4 border-blue-600">
-            <h2 className="text-xl font-semibold mb-4">Create New User</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name*
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="input-field"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email*
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    className="input-field"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="john@hospital.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password*
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    className="input-field"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Min 6 characters"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Role*
-                  </label>
-                  <select
-                    required
-                    className="input-field"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  >
-                    <option value="nurse">Nurse</option>
-                    <option value="doctor">Doctor</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone (Optional)
-                  </label>
-                  <input
-                    type="tel"
-                    className="input-field"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+1 (555) 123-4567"
-                  />
-                </div>
-              </div>
-              <div className="flex space-x-4">
-                <button type="submit" className="btn-primary">
-                  Create Account
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
         {/* Users List */}
         {loading ? (
-          <div className="text-center py-12">Loading users...</div>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading users...</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {users.map((user) => (
-              <div key={user._id} className="card hover:shadow-lg transition-shadow">
+              <div key={user._id} className="card hover:shadow-lg transition-all duration-200">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     {getRoleIcon(user.role)}
@@ -205,13 +153,22 @@ const AdminUsersPage = () => {
                       <p className="text-sm text-gray-600">{user.email}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(user._id, user)}
-                    className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors"
-                    title="Delete user"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => handleEdit(user)}
+                      className="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors"
+                      title="Edit user"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user._id, user)}
+                      className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors"
+                      title="Delete user"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadge(user.role)}`}>
@@ -229,6 +186,98 @@ const AdminUsersPage = () => {
           </div>
         )}
       </main>
+
+      {/* User Form Modal */}
+      <Modal 
+        isOpen={showForm} 
+        onClose={handleCloseModal}
+        title={editingUser ? 'Edit User' : 'Create New User'}
+        size="md"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name*
+            </label>
+            <input
+              type="text"
+              required
+              className="input-field"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="John Doe"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email*
+            </label>
+            <input
+              type="email"
+              required
+              className="input-field"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="john@hospital.com"
+            />
+          </div>
+          {!editingUser && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password*
+              </label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                className="input-field"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Min 6 characters"
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Role*
+            </label>
+            <select
+              required
+              className="input-field"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            >
+              <option value="nurse">Nurse</option>
+              <option value="doctor">Doctor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone (Optional)
+            </label>
+            <input
+              type="tel"
+              className="input-field"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="+1 (555) 123-4567"
+            />
+          </div>
+          <div className="flex space-x-4 pt-4">
+            <button type="submit" className="btn-primary flex-1">
+              {editingUser ? 'Update User' : 'Create Account'}
+            </button>
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

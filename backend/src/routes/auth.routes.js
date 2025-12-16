@@ -202,6 +202,69 @@ router.get('/users', protect, authorize('admin'), async (req, res) => {
   }
 });
 
+// @route   PUT /api/v1/auth/users/:id
+// @desc    Update user (ADMIN ONLY)
+// @access  Private/Admin
+router.put('/users/:id', protect, authorize('admin'), [
+  body('name').optional().notEmpty().withMessage('Name cannot be empty'),
+  body('email').optional().isEmail().withMessage('Invalid email'),
+  body('role').optional().isIn(['nurse', 'doctor', 'admin']).withMessage('Invalid role'),
+  body('phone').optional()
+], validate, async (req, res) => {
+  try {
+    const { name, email, role, phone } = req.body;
+    
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already in use'
+        });
+      }
+    }
+
+    // Update fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (role) user.role = role;
+    if (phone !== undefined) user.phone = phone;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'User updated successfully',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating user',
+      error: error.message
+    });
+  }
+});
+
 // @route   DELETE /api/v1/auth/users/:id
 // @desc    Delete user (ADMIN ONLY)
 // @access  Private/Admin
