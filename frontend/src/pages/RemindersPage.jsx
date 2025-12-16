@@ -29,9 +29,7 @@ const RemindersPage = () => {
 
   const handleSnooze = async (id) => {
     const hours = prompt('Snooze for how many hours? (1-72):');
-    if (!hours || isN
-
-aN(hours) || hours < 1 || hours > 72) return;
+    if (!hours || isNaN(hours) || hours < 1 || hours > 72) return;
 
     try {
       await api.put(`/reminders/${id}/snooze`, { hours: parseInt(hours) });
