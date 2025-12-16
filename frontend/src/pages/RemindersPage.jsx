@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Clock, CheckCircle, XCircle, Snooze } from 'lucide-react';
+import Navbar from '../components/Navbar';
 import api from '../services/api';
 
 const RemindersPage = () => {
@@ -14,7 +16,8 @@ const RemindersPage = () => {
   const fetchReminders = async () => {
     try {
       setLoading(true);
-      const params = filter === 'all' ? {} : { status: filter };
+      const params = {};
+      if (filter !== 'all') params.status = filter;
       
       const response = await api.get('/reminders', { params });
       if (response.data.success) {
@@ -28,8 +31,11 @@ const RemindersPage = () => {
   };
 
   const handleSnooze = async (id) => {
-    const hours = prompt('Snooze for how many hours? (1-72):');
-    if (!hours || isNaN(hours) || hours < 1 || hours > 72) return;
+    const hours = prompt('Snooze for how many hours? (1-72)');
+    if (!hours || isNaN(hours) || hours < 1 || hours > 72) {
+      alert('Please enter a valid number between 1 and 72');
+      return;
+    }
 
     try {
       await api.put(`/reminders/${id}/snooze`, { hours: parseInt(hours) });
@@ -55,50 +61,47 @@ const RemindersPage = () => {
       case 'high': return 'border-l-4 border-red-500';
       case 'medium': return 'border-l-4 border-yellow-500';
       case 'low': return 'border-l-4 border-blue-500';
-      default: return '';
+      default: return 'border-l-4 border-gray-300';
     }
   };
 
+  const filterTabs = [
+    { key: 'pending', label: 'Pending' },
+    { key: 'snoozed', label: 'Snoozed' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'all', label: 'All' }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="text-2xl font-bold text-primary-600">Manual-RPM</Link>
-              <Link to="/patients" className="text-gray-600 hover:text-gray-900">Patients</Link>
-              <Link to="/alerts" className="text-gray-600 hover:text-gray-900">Alerts</Link>
-              <Link to="/reminders" className="text-gray-900 font-medium">Reminders</Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Reminders</h1>
 
         {/* Filter Tabs */}
-        <div className="card mb-6">
-          <div className="flex space-x-4">
-            {['pending', 'snoozed', 'completed', 'all'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  filter === status
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </button>
-            ))}
-          </div>
+        <div className="mb-6 flex space-x-2 overflow-x-auto">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 ${
+                filter === tab.key
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Reminders List */}
         {loading ? (
-          <div className="text-center py-12">Loading reminders...</div>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading reminders...</p>
+          </div>
         ) : reminders.length === 0 ? (
           <div className="card text-center py-12">
             <p className="text-gray-600">No reminders found</p>
@@ -106,7 +109,10 @@ const RemindersPage = () => {
         ) : (
           <div className="space-y-4">
             {reminders.map((reminder) => (
-              <div key={reminder._id} className={`card ${getPriorityColor(reminder.priority)}`}>
+              <div
+                key={reminder._id}
+                className={`card hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${getPriorityColor(reminder.priority)}`}
+              >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
@@ -139,22 +145,24 @@ const RemindersPage = () => {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    {(reminder.status === 'pending' || reminder.status === 'snoozed') && (
-                      <>
-                        <button
-                          onClick={() => handleSnooze(reminder._id)}
-                          className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-sm font-medium hover:bg-yellow-200"
-                        >
-                          Snooze
-                        </button>
-                        <button
-                          onClick={() => handleComplete(reminder._id)}
-                          className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700"
-                        >
-                          Complete
-                        </button>
-                      </>
-                    )}
+                    {reminder.status === 'pending' || reminder.status === 'snoozed' ? (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleSnooze(reminder._id)}
+                        className="px-3 py-1 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-all duration-200 transform hover:scale-105 flex items-center space-x-1"
+                      >
+                        <Clock size={14} />
+                        <span>Snooze</span>
+                      </button>
+                      <button
+                        onClick={() => handleComplete(reminder._id)}
+                        className="px-3 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-all duration-200 transform hover:scale-105 flex items-center space-x-1"
+                      >
+                        <CheckCircle size={14} />
+                        <span>Complete</span>
+                      </button>
+                    </div>
+                  ) : null}
                     {reminder.status === 'completed' && (
                       <span className="px-3 py-1 bg-green-100 text-green-800 rounded text-sm font-semibold">
                         ✓ Completed
