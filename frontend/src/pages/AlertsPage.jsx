@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  AlertTriangle, 
+  Check, 
+  CheckCircle, 
+  Clock, 
+  Filter,
+  RefreshCw,
+  User,
+  ArrowRight
+} from 'lucide-react';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
+import toast from '../utils/toast';
 
 const AlertsPage = () => {
   const [alerts, setAlerts] = useState([]);
@@ -25,6 +37,7 @@ const AlertsPage = () => {
       }
     } catch (error) {
       console.error('Error fetching alerts:', error);
+      toast.error('Failed to fetch alerts');
     } finally {
       setLoading(false);
     }
@@ -33,10 +46,11 @@ const AlertsPage = () => {
   const handleAcknowledge = async (id) => {
     try {
       await api.put(`/alerts/${id}/acknowledge`);
+      toast.success('Alert acknowledged');
       fetchAlerts();
     } catch (error) {
       console.error('Error acknowledging alert:', error);
-      alert('Failed to acknowledge alert');
+      toast.error('Failed to acknowledge alert');
     }
   };
 
@@ -44,152 +58,312 @@ const AlertsPage = () => {
     const notes = prompt('Resolution notes (optional):');
     try {
       await api.put(`/alerts/${id}/resolve`, { notes: notes || '' });
+      toast.success('Alert resolved');
       fetchAlerts();
     } catch (error) {
       console.error('Error resolving alert:', error);
-      alert('Failed to resolve alert');
+      toast.error('Failed to resolve alert');
     }
   };
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-300';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-300';
-      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+  const getSeverityStyles = (severity) => {
+    const styles = {
+      critical: { 
+        bg: 'var(--error-muted)', 
+        border: 'var(--error)',
+        text: 'var(--error)',
+        icon: 'var(--error)'
+      },
+      high: { 
+        bg: 'rgba(249, 115, 22, 0.15)', 
+        border: '#f97316',
+        text: '#f97316',
+        icon: '#f97316'
+      },
+      medium: { 
+        bg: 'var(--warning-muted)', 
+        border: 'var(--warning)',
+        text: 'var(--warning)',
+        icon: 'var(--warning)'
+      },
+      low: { 
+        bg: 'var(--info-muted)', 
+        border: 'var(--info)',
+        text: 'var(--info)',
+        icon: 'var(--info)'
+      }
+    };
+    return styles[severity] || styles.low;
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'active': return AlertTriangle;
+      case 'acknowledged': return Clock;
+      case 'resolved': return CheckCircle;
+      default: return AlertTriangle;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-container">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Alerts Dashboard</h1>
+      <main className="page-content">
+        {/* Header Actions */}
+        <motion.div
+          className="flex justify-end mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <button
+            onClick={() => fetchAlerts()}
+            className="btn-secondary"
+          >
+            <RefreshCw size={16} />
+            <span>Refresh</span>
+          </button>
+        </motion.div>
 
         {/* Filters */}
-        <div className="card mb-6">
+        <motion.div
+          className="card mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                className="input-field"
-                value={filter.status}
-                onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
               >
-                <option value="active">Active</option>
-                <option value="acknowledged">Acknowledged</option>
-                <option value="resolved">Resolved</option>
-                <option value="">All</option>
-              </select>
+                Status
+              </label>
+              <div className="relative">
+                <Filter
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--text-tertiary)' }}
+                />
+                <select
+                  className="input-field pl-10 appearance-none cursor-pointer"
+                  value={filter.status}
+                  onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+                >
+                  <option value="active">Active</option>
+                  <option value="acknowledged">Acknowledged</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="">All Status</option>
+                </select>
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
-              <select
-                className="input-field"
-                value={filter.severity}
-                onChange={(e) => setFilter({ ...filter, severity: e.target.value })}
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
               >
-                <option value="">All Severities</option>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+                Severity
+              </label>
+              <div className="relative">
+                <AlertTriangle
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--text-tertiary)' }}
+                />
+                <select
+                  className="input-field pl-10 appearance-none cursor-pointer"
+                  value={filter.severity}
+                  onChange={(e) => setFilter({ ...filter, severity: e.target.value })}
+                >
+                  <option value="">All Severities</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Alerts List */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading alerts...</p>
-          </div>
-        ) : alerts.length === 0 ? (
-          <div className="card text-center py-12">
-            <p className="text-gray-600">No alerts found</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {alerts.map((alert, index) => (
-              <div
-                key={alert._id}
-                className={`card hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${getSeverityColor(alert.severity)}`}
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >  <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="px-2 py-1 bg-white rounded text-xs font-semibold uppercase">
-                        {alert.severity}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        {new Date(alert.createdAt).toLocaleString()}
-                      </span>
+        <div className="space-y-3">
+          <AnimatePresence mode="wait">
+            {loading ? (
+              // Loading Skeletons
+              [...Array(4)].map((_, i) => (
+                <motion.div
+                  key={`skeleton-${i}`}
+                  className="card"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="skeleton w-10 h-10 rounded-lg" />
+                    <div className="flex-1">
+                      <div className="skeleton w-32 h-5 rounded mb-2" />
+                      <div className="skeleton w-48 h-4 rounded mb-2" />
+                      <div className="skeleton w-full h-4 rounded" />
                     </div>
-                    <Link to={`/patients/${alert.patient._id}`} className="font-semibold hover:underline">
-                      {alert.patient.name} (MRN: {alert.patient.mrn})
-                    </Link>
-                    <p className="text-sm mt-1">{alert.message}</p>
                   </div>
-                  <div className="flex space-x-2">
-                    {alert.status === 'active' && (
-                      <>
-                        <button
-                          onClick={() => handleAcknowledge(alert._id)}
-                          className="px-3 py-1 bg-white text-gray-700 rounded text-sm font-medium hover:bg-gray-100"
-                        >
-                          Acknowledge
-                        </button>
-                        <button
-                          onClick={() => handleResolve(alert._id)}
-                          className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700"
-                        >
-                          Resolve
-                        </button>
-                      </>
-                    )}
-                    {alert.status === 'acknowledged' && (
-                      <button
-                        onClick={() => handleResolve(alert._id)}
-                        className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700"
+                </motion.div>
+              ))
+            ) : alerts.length === 0 ? (
+              <motion.div
+                className="card empty-state py-16"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <CheckCircle size={48} style={{ color: 'var(--success)' }} className="mb-4" />
+                <h3
+                  className="text-lg font-semibold mb-2"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  All clear!
+                </h3>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  No alerts found for the selected filters
+                </p>
+              </motion.div>
+            ) : (
+              alerts.map((alert, index) => {
+                const severity = getSeverityStyles(alert.severity);
+                const StatusIcon = getStatusIcon(alert.status);
+
+                return (
+                  <motion.div
+                    key={alert._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                    className="card relative overflow-hidden"
+                    style={{
+                      borderLeft: `4px solid ${severity.border}`
+                    }}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Severity Icon */}
+                      <div
+                        className="p-2.5 rounded-lg flex-shrink-0"
+                        style={{ background: severity.bg }}
                       >
-                        Resolve
-                      </button>
-                    )}
-                  </div>
-                </div>
-                
-                {alert.flaggedFields && alert.flaggedFields.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm mt-2 pt-2 border-t border-current opacity-75">
-                    {alert.flaggedFields.map((field, idx) => (
-                      <div key={idx}>
-                        <span className="font-medium">{field.field}:</span> {field.value}
-                        {field.normalRange && (
-                          <span className="text-xs ml-1">
-                            (normal: {field.normalRange.min}-{field.normalRange.max})
+                        <StatusIcon size={20} style={{ color: severity.icon }} />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className="badge text-xs uppercase"
+                            style={{ background: severity.bg, color: severity.text }}
+                          >
+                            {alert.severity}
                           </span>
+                          <span
+                            className="text-xs"
+                            style={{ color: 'var(--text-tertiary)' }}
+                          >
+                            {new Date(alert.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <Link
+                          to={`/patients/${alert.patient?._id}`}
+                          className="font-semibold hover:underline flex items-center gap-2"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          <User size={14} />
+                          {alert.patient?.name} (MRN: {alert.patient?.mrn})
+                          <ArrowRight size={14} style={{ color: 'var(--text-tertiary)' }} />
+                        </Link>
+
+                        <p
+                          className="text-sm mt-1"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          {alert.message}
+                        </p>
+
+                        {/* Flagged Fields */}
+                        {alert.flaggedFields && alert.flaggedFields.length > 0 && (
+                          <div
+                            className="flex flex-wrap gap-2 mt-3 pt-3"
+                            style={{ borderTop: '1px solid var(--border-subtle)' }}
+                          >
+                            {alert.flaggedFields.map((field, idx) => (
+                              <span
+                                key={idx}
+                                className="badge badge-neutral text-xs"
+                              >
+                                {field.field}: {field.value}
+                                {field.normalRange && (
+                                  <span className="opacity-60 ml-1">
+                                    ({field.normalRange.min}-{field.normalRange.max})
+                                  </span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Resolution Info */}
+                        {alert.status !== 'active' && (
+                          <div
+                            className="text-xs mt-3 pt-3"
+                            style={{ 
+                              borderTop: '1px solid var(--border-subtle)',
+                              color: 'var(--text-tertiary)'
+                            }}
+                          >
+                            {alert.status === 'acknowledged' && (
+                              <p>Acknowledged by {alert.acknowledgedBy?.name} at {new Date(alert.acknowledgedAt).toLocaleString()}</p>
+                            )}
+                            {alert.status === 'resolved' && (
+                              <p>Resolved by {alert.resolvedBy?.name} at {new Date(alert.resolvedAt).toLocaleString()}</p>
+                            )}
+                          </div>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
 
-                {alert.status !== 'active' && (
-                  <div className="text-xs mt-2 pt-2 border-t border-current opacity-75">
-                    {alert.status === 'acknowledged' && (
-                      <p>Acknowledged by {alert.acknowledgedBy?.name} at {new Date(alert.acknowledgedAt).toLocaleString()}</p>
-                    )}
-                    {alert.status === 'resolved' && (
-                      <p>Resolved by {alert.resolvedBy?.name} at {new Date(alert.resolvedAt).toLocaleString()}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+                      {/* Actions */}
+                      <div className="flex flex-col gap-2 flex-shrink-0">
+                        {alert.status === 'active' && (
+                          <>
+                            <button
+                              onClick={() => handleAcknowledge(alert._id)}
+                              className="btn-secondary text-sm"
+                            >
+                              <Clock size={14} />
+                              Acknowledge
+                            </button>
+                            <button
+                              onClick={() => handleResolve(alert._id)}
+                              className="btn-primary text-sm"
+                            >
+                              <Check size={14} />
+                              Resolve
+                            </button>
+                          </>
+                        )}
+                        {alert.status === 'acknowledged' && (
+                          <button
+                            onClick={() => handleResolve(alert._id)}
+                            className="btn-primary text-sm"
+                          >
+                            <Check size={14} />
+                            Resolve
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
+        </div>
       </main>
     </div>
   );

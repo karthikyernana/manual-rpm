@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { generateToken } = require('../utils/jwt');
 const { protect, authorize } = require('../middleware/auth');
+const { logAudit, ACTIONS } = require('../utils/auditLogger');
 
 const router = express.Router();
 
@@ -30,8 +31,10 @@ router.post(
     body('name').notEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password')
-      .isLength({ min: 6 })
-      .withMessage('Password must be at least 6 characters'),
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters')
+      .matches(/^(?=.*[A-Za-z])(?=.*\d)/)
+      .withMessage('Password must contain at least one letter and one number'),
     body('role').isIn(['nurse', 'doctor', 'admin']).withMessage('Invalid role')
   ],
   validate,
@@ -125,6 +128,17 @@ router.post(
       // Generate token
       const token = generateToken(user._id);
 
+      // Log successful login
+      await logAudit({
+        action: ACTIONS.LOGIN,
+        userId: user._id,
+        resourceType: 'user',
+        resourceId: user._id,
+        resourceName: user.email,
+        details: `User ${user.name} logged in`,
+        req
+      });
+
       res.json({
         success: true,
         message: 'Login successful',
@@ -208,7 +222,8 @@ router.get('/users', protect, authorize('admin'), async (req, res) => {
 router.put('/users/:id', protect, authorize('admin'), [
   body('name').optional().notEmpty().withMessage('Name cannot be empty'),
   body('email').optional().isEmail().withMessage('Invalid email'),
-  body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password').optional().isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/^(?=.*[A-Za-z])(?=.*\d)/).withMessage('Password must contain at least one letter and one number'),
   body('role').optional().isIn(['nurse', 'doctor', 'admin']).withMessage('Invalid role'),
   body('phone').optional()
 ], validate, async (req, res) => {

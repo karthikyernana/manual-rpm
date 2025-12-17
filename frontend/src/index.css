@@ -1,11 +1,674 @@
 @import 'tailwindcss/base';
+@import './animations.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import './animations.css';
+
+/* ============================================
+   VITALIS DESIGN SYSTEM
+   Notion-inspired, Dark Mode First
+   ============================================ */
+
+:root {
+  /* Warm Neutral Palette (Notion-inspired) */
+  --bg-primary: #191919;
+  --bg-secondary: #202020;
+  --bg-tertiary: #2f2f2f;
+  --bg-elevated: #252525;
+  --bg-hover: #333333;
+  --bg-active: #3d3d3d;
+  
+  /* Text Colors */
+  --text-primary: #ebebeb;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #6b6b6b;
+  --text-disabled: #4a4a4a;
+  
+  /* Brand Colors - Teal/Emerald for Healthcare */
+  --brand-primary: #10b981;
+  --brand-secondary: #059669;
+  --brand-muted: rgba(16, 185, 129, 0.15);
+  --brand-glow: rgba(16, 185, 129, 0.4);
+  
+  /* Status Colors */
+  --success: #22c55e;
+  --success-muted: rgba(34, 197, 94, 0.15);
+  --warning: #f59e0b;
+  --warning-muted: rgba(245, 158, 11, 0.15);
+  --error: #ef4444;
+  --error-muted: rgba(239, 68, 68, 0.15);
+  --critical: #dc2626;
+  --info: #3b82f6;
+  --info-muted: rgba(59, 130, 246, 0.15);
+  
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px var(--brand-glow);
+  
+  /* Spacing */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light Mode Variables (toggle support) */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f5;
+  --bg-tertiary: #f0f0ef;
+  --bg-elevated: #ffffff;
+  --bg-hover: #ebebea;
+  --bg-active: #e3e3e2;
+  
+  --text-primary: #1f1f1f;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #9b9b9b;
+  --text-disabled: #c7c7c7;
+  
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-default: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+@layer base {
+  /* Font Import - Inter for clean typography */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    letter-spacing: -0.011em;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--bg-hover);
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--brand-muted);
+    color: var(--text-primary);
+  }
+}
+
+@layer components {
+  /* ==========================================
+     BUTTONS - Notion Style
+     ========================================== */
+  
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-medium rounded-lg;
+    background: var(--brand-primary);
+    color: #ffffff;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-primary:hover {
+    background: var(--brand-secondary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-medium rounded-lg;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    transition: all var(--transition-normal);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+  }
+
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-medium rounded-lg;
+    background: var(--error-muted);
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    transition: all var(--transition-normal);
+  }
+
+  .btn-danger:hover {
+    background: var(--error);
+    color: #ffffff;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 font-medium rounded-lg;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
+  }
+
+  .btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .btn-icon {
+    @apply inline-flex items-center justify-center p-2 rounded-lg;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
+  }
+
+  .btn-icon:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  /* ==========================================
+     INPUTS - Clean, Modern
+     ========================================== */
+  
+  .input-field {
+    @apply w-full px-3 py-2.5 rounded-lg text-sm;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    transition: all var(--transition-normal);
+  }
+
+  .input-field::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  .input-field:hover {
+    border-color: var(--border-strong);
+  }
+
+  .input-field:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px var(--brand-muted);
+  }
+
+  .input-field:disabled {
+    background: var(--bg-tertiary);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+
+  .input-error {
+    @apply w-full px-3 py-2.5 rounded-lg text-sm;
+    background: var(--bg-secondary);
+    border: 1px solid var(--error);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px var(--error-muted);
+  }
+
+  /* ==========================================
+     CARDS - Notion-style with subtle borders
+     ========================================== */
+  
+  .card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    transition: all var(--transition-normal);
+  }
+
+  .card-elevated {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-normal);
+  }
+
+  .card-interactive {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+  }
+
+  .card-interactive:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-default);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ==========================================
+     BADGES - Status indicators
+     ========================================== */
+  
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    background: var(--success-muted);
+    color: var(--success);
+  }
+
+  .badge-warning {
+    background: var(--warning-muted);
+    color: var(--warning);
+  }
+
+  .badge-error {
+    background: var(--error-muted);
+    color: var(--error);
+  }
+
+  .badge-info {
+    background: var(--info-muted);
+    color: var(--info);
+  }
+
+  .badge-neutral {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+  }
+
+  .badge-brand {
+    background: var(--brand-muted);
+    color: var(--brand-primary);
+  }
+
+  /* ==========================================
+     STAT CARDS - Dashboard widgets
+     ========================================== */
+  
+  .stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--brand-primary);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+
+  .stat-card:hover {
+    border-color: var(--border-default);
+    background: var(--bg-tertiary);
+  }
+
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+
+  .stat-card-success::before { background: var(--success); opacity: 1; }
+  .stat-card-warning::before { background: var(--warning); opacity: 1; }
+  .stat-card-error::before { background: var(--error); opacity: 1; }
+  .stat-card-info::before { background: var(--info); opacity: 1; }
+
+  /* ==========================================
+     NAVIGATION
+     ========================================== */
+  
+  .nav-link {
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium;
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
+  }
+
+  .nav-link:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .nav-link-active {
+    background: var(--brand-muted);
+    color: var(--brand-primary);
+  }
+
+  .nav-link-active:hover {
+    background: var(--brand-muted);
+    color: var(--brand-primary);
+  }
+
+  /* ==========================================
+     MODAL / OVERLAY
+     ========================================== */
+  
+  .modal-backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-content {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* ==========================================
+     TABLES
+     ========================================== */
+  
+  .table-header {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .table-row {
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background var(--transition-fast);
+  }
+
+  .table-row:hover {
+    background: var(--bg-hover);
+  }
+
+  /* ==========================================
+     DIVIDERS
+     ========================================== */
+  
+  .divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 1rem 0;
+  }
+
+  .divider-vertical {
+    width: 1px;
+    background: var(--border-subtle);
+    margin: 0 0.75rem;
+  }
+
+  /* ==========================================
+     AVATAR
+     ========================================== */
+  
+  .avatar {
+    @apply flex items-center justify-center rounded-full font-medium;
+    background: var(--brand-muted);
+    color: var(--brand-primary);
+  }
+
+  .avatar-sm { @apply w-8 h-8 text-xs; }
+  .avatar-md { @apply w-10 h-10 text-sm; }
+  .avatar-lg { @apply w-12 h-12 text-base; }
+
+  /* ==========================================
+     TOOLTIPS
+     ========================================== */
+  
+  .tooltip {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ==========================================
+     PAGE LAYOUTS
+     ========================================== */
+  
+  .page-container {
+    min-height: 100vh;
+    background: var(--bg-primary);
+  }
+
+  .page-content {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+  }
+
+  /* ==========================================
+     SECTION HEADERS
+     ========================================== */
+  
+  .section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  /* ==========================================
+     EMPTY STATES
+     ========================================== */
+  
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 text-center;
+    color: var(--text-secondary);
+  }
+
+  .empty-state-icon {
+    @apply w-16 h-16 mb-4 opacity-40;
+    color: var(--text-tertiary);
+  }
+
+  /* ==========================================
+     LOADING STATES
+     ========================================== */
+  
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--bg-tertiary) 25%,
+      var(--bg-hover) 50%,
+      var(--bg-tertiary) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-md);
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .spinner {
+    @apply w-5 h-5 border-2 rounded-full animate-spin;
+    border-color: var(--brand-muted);
+    border-top-color: var(--brand-primary);
+  }
+
+  /* ==========================================
+     TABS
+     ========================================== */
+  
+  .tab {
+    @apply flex items-center gap-2 px-4 py-2.5 font-medium text-sm border-b-2;
+    color: var(--text-secondary);
+    border-color: transparent;
+    transition: all var(--transition-normal);
+  }
+
+  .tab:hover {
+    color: var(--text-primary);
+  }
+
+  .tab-active {
+    color: var(--brand-primary);
+    border-color: var(--brand-primary);
+  }
+
+  /* ==========================================
+     TOGGLE / SWITCH
+     ========================================== */
+  
+  .toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer;
+    background: var(--bg-tertiary);
+    transition: background var(--transition-normal);
+  }
+
+  .toggle-active {
+    background: var(--brand-primary);
+  }
+
+  .toggle-knob {
+    @apply inline-block h-4 w-4 transform rounded-full bg-white shadow-sm;
+    transition: transform var(--transition-normal);
+  }
+
+  .toggle-active .toggle-knob {
+    transform: translateX(1.25rem);
+  }
+}
 
 @layer utilities {
-  /* Modal & Toast Animations */
+  /* Hover Lift Effect */
+  .hover-lift {
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Focus Ring */
+  .focus-ring {
+    @apply focus:outline-none;
+  }
+
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 3px var(--brand-muted);
+  }
+
+  /* Text Gradient */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--brand-primary), #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow Effect */
+  .glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Truncate */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Animation Delays */
+  .delay-75 { animation-delay: 75ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+
+  /* Fade In */
   .animate-fadeIn {
     animation: fadeIn 200ms ease-out;
   }
@@ -18,114 +681,34 @@
     animation: slideDown 250ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Hover lift effect for cards */
-  .hover-lift {
-    transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.12);
-  }
-
-  /* Loading skeleton */
-  .skeleton {
-    @apply animate-pulse bg-gray-200 rounded;
-  }
-
-  /* Focus ring - Professional blue */
-  .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
-  }
-
-  /* Badge styles */
-  .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-  }
-
-  .badge-primary {
-    @apply bg-blue-100 text-blue-800;
-  }
-
-  .badge-success {
-    @apply bg-green-100 text-green-800;
-  }
-
-  .badge-warning {
-    @apply bg-yellow-100 text-yellow-800;
-  }
-
-  .badge-danger {
-    @apply bg-red-100 text-red-800;
+  .animate-scaleIn {
+    animation: scaleIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-@layer base {
-  /* Better font rendering */
-  * {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Body defaults */
-  body {
-    @apply text-gray-900 bg-gray-50;
-  }
+/* Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@layer components {
-  /* Primary Button - Professional Blue Gradient */
-  .btn-primary {
-    @apply px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium 
-           hover:from-blue-700 hover:to-blue-800 transition-all duration-200 
-           shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-  
-  /* Secondary Button - Clean Gray */
-  .btn-secondary {
-    @apply px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium 
-           hover:bg-gray-50 hover:border-gray-400 transition-all duration-200
-           focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed;
-  }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  /* Danger Button - Red for Delete Actions */
-  .btn-danger {
-    @apply px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium 
-           hover:bg-red-700 transition-all duration-200
-           shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
-  }
-  
-  /* Input Field - Clean and Professional */
-  .input-field {
-    @apply w-full px-3 py-2.5 border border-gray-300 rounded-lg 
-           focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-           transition-all duration-200 text-gray-900 placeholder-gray-400
-           disabled:bg-gray-100 disabled:cursor-not-allowed;
-  }
-  
-  /* Error Input Field */
-  .input-error {
-    @apply w-full px-3 py-2.5 border-2 border-red-500 rounded-lg 
-           focus:ring-2 focus:ring-red-500 focus:border-transparent
-           transition-all duration-200;
-  }
-  
-  /* Card - Elevated and Clean */
-  .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6
-           transition-all duration-200;
-  }
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  /* Card Hover Effect */
-  .card.hover-lift:hover {
-    @apply shadow-lg -translate-y-1;
-  }
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Count Up Animation for Numbers */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

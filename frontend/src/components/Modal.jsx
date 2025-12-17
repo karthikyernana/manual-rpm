@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md', showCloseButton = true }) => {
@@ -20,14 +21,12 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md', showCloseButton 
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const sizeClasses = {
-    sm: 'max-w-sm',     // 384px
-    md: 'max-w-md',     // 448px
-    lg: 'max-w-2xl',    // 672px
-    xl: 'max-w-4xl',    // 896px
-    full: 'max-w-7xl',  // 1280px
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-7xl',
   };
 
   const handleBackdropClick = (e) => {
@@ -37,38 +36,73 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md', showCloseButton 
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm animate-fadeIn"
-      onClick={handleBackdropClick}
-    >
-      <div
-        className={`bg-white rounded-xl shadow-2xl w-full ${sizeClasses[size]} animate-slideUp overflow-hidden`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
-            {title && (
-              <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-            )}
-            {showCloseButton && (
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-200"
-                aria-label="Close modal"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={handleBackdropClick}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <motion.div
+            className={`w-full ${sizeClasses[size]} overflow-hidden`}
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-lg)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+          >
+            {/* Header */}
+            {(title || showCloseButton) && (
+              <div
+                className="flex items-center justify-between px-6 py-4"
+                style={{
+                  borderBottom: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-secondary)'
+                }}
               >
-                <X size={20} />
-              </button>
+                {title && (
+                  <h2
+                    className="text-lg font-semibold"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    {title}
+                  </h2>
+                )}
+                {showCloseButton && (
+                  <motion.button
+                    onClick={onClose}
+                    className="btn-icon"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Close modal"
+                  >
+                    <X size={20} />
+                  </motion.button>
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        {/* Content */}
-        <div className="px-6 py-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
-          {children}
-        </div>
-      </div>
-    </div>
+            {/* Content */}
+            <div
+              className="px-6 py-4 max-h-[calc(100vh-12rem)] overflow-y-auto"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {children}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

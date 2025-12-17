@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ArrowLeft, User, Phone, MapPin, FileText, AlertCircle, Save } from 'lucide-react';
+import Navbar from '../components/Navbar';
 import api from '../services/api';
+import toast from '../utils/toast';
 
 const PatientFormPage = () => {
   const { id } = useParams();
@@ -59,6 +63,7 @@ const PatientFormPage = () => {
     } catch (error) {
       console.error('Error fetching patient:', error);
       setError('Failed to load patient data');
+      toast.error('Failed to load patient data');
     }
   };
 
@@ -91,262 +96,386 @@ const PatientFormPage = () => {
     try {
       if (isEdit) {
         await api.put(`/patients/${id}`, formData);
+        toast.success('Patient updated successfully!');
       } else {
         await api.post('/patients', formData);
+        toast.success('Patient created successfully!');
       }
       navigate('/patients');
     } catch (error) {
-      setError(error.response?.data?.message || `Failed to ${isEdit ? 'update' : 'create'} patient`);
+      const errorMsg = error.response?.data?.message || `Failed to ${isEdit ? 'update' : 'create'} patient`;
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4">
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/patients')}
-            className="text-primary-600 hover:text-primary-700 font-medium"
+    <div className="page-container">
+      <Navbar />
+      
+      <main className="page-content">
+        {/* Back Link */}
+        <motion.div
+          className="mb-6"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <Link
+            to="/patients"
+            className="inline-flex items-center gap-2 text-sm font-medium transition-colors"
+            style={{ color: 'var(--brand-primary)' }}
           >
-            ← Back to Patients
-          </button>
-        </div>
+            <ArrowLeft size={16} />
+            Back to Patients
+          </Link>
+        </motion.div>
 
-        <div className="card">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            {isEdit ? 'Edit Patient' : 'Add New Patient'}
-          </h1>
-
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  MRN * {isEdit && '(cannot be changed)'}
-                </label>
-                <input
-                  type="text"
-                  name="mrn"
-                  required
-                  disabled={isEdit}
-                  className="input-field disabled:bg-gray-100"
-                  value={formData.mrn}
-                  onChange={handleChange}
-                />
+        <motion.div
+          className="max-w-3xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="card-elevated">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <div
+                className="p-2.5 rounded-lg"
+                style={{ background: 'var(--brand-muted)' }}
+              >
+                <User size={24} style={{ color: 'var(--brand-primary)' }} />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  className="input-field"
-                  value={formData.name}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date of Birth *
-                </label>
-                <input
-                  type="date"
-                  name="dob"
-                  required
-                  className="input-field"
-                  value={formData.dob}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gender *
-                </label>
-                <select
-                  name="gender"
-                  required
-                  className="input-field"
-                  value={formData.gender}
-                  onChange={handleChange}
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ward *
-                </label>
-                <select
-                  name="ward"
-                  required
-                  className="input-field"
-                  value={formData.ward}
-                  onChange={handleChange}
-                >
-                  <option value="">Select Ward</option>
-                  <option value="ICU-1">ICU-1</option>
-                  <option value="ICU-2">ICU-2</option>
-                  <option value="General-1">General-1</option>
-                  <option value="Cardiac">Cardiac</option>
-                  <option value="Pediatric">Pediatric</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bed Number
-                </label>
-                <input
-                  type="text"
-                  name="bed"
-                  className="input-field"
-                  value={formData.bed}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  className="input-field"
-                  value={formData.phone}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Template *
-                </label>
-                <select
-                  name="template"
-                  required
-                  className="input-field"
-                  value={formData.template}
-                  onChange={handleChange}
-                >
-                  <option value="general">General</option>
-                  <option value="cardiac">Cardiac</option>
-                  <option value="diabetic">Diabetic</option>
-                </select>
-              </div>
+              <h1
+                className="text-2xl font-bold"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {isEdit ? 'Edit Patient' : 'Add New Patient'}
+              </h1>
             </div>
 
-            <div>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="consent"
-                  checked={formData.consent}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Patient has provided consent for monitoring
-                </span>
-              </label>
-            </div>
+            {/* Error Message */}
+            {error && (
+              <motion.div
+                className="mb-6 p-4 rounded-lg flex items-center gap-3"
+                style={{
+                  background: 'var(--error-muted)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)'
+                }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <AlertCircle size={20} style={{ color: 'var(--error)' }} />
+                <p style={{ color: 'var(--error)' }}>{error}</p>
+              </motion.div>
+            )}
 
-            {/* Emergency Contact */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Emergency Contact</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    MRN * {isEdit && <span style={{ color: 'var(--text-tertiary)' }}>(cannot be changed)</span>}
                   </label>
                   <input
                     type="text"
-                    name="emergencyContact.name"
+                    name="mrn"
+                    required
+                    disabled={isEdit}
+                    className="input-field disabled:opacity-50 disabled:cursor-not-allowed"
+                    value={formData.mrn}
+                    onChange={handleChange}
+                    placeholder="Medical Record Number"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
                     className="input-field"
-                    value={formData.emergencyContact.name}
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Patient's full name"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Date of Birth *
+                  </label>
+                  <input
+                    type="date"
+                    name="dob"
+                    required
+                    className="input-field"
+                    value={formData.dob}
                     onChange={handleChange}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Gender *
+                  </label>
+                  <select
+                    name="gender"
+                    required
+                    className="input-field"
+                    value={formData.gender}
+                    onChange={handleChange}
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Ward *
+                  </label>
+                  <select
+                    name="ward"
+                    required
+                    className="input-field"
+                    value={formData.ward}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select Ward</option>
+                    <option value="ICU-1">ICU-1</option>
+                    <option value="ICU-2">ICU-2</option>
+                    <option value="General-1">General-1</option>
+                    <option value="Cardiac">Cardiac</option>
+                    <option value="Pediatric">Pediatric</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Bed Number
+                  </label>
+                  <input
+                    type="text"
+                    name="bed"
+                    className="input-field"
+                    value={formData.bed}
+                    onChange={handleChange}
+                    placeholder="e.g., 12A"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
                     Phone
                   </label>
                   <input
                     type="tel"
-                    name="emergencyContact.phone"
+                    name="phone"
                     className="input-field"
-                    value={formData.emergencyContact.phone}
+                    value={formData.phone}
                     onChange={handleChange}
+                    placeholder="+1 (555) 123-4567"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Relationship
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Template *
                   </label>
-                  <input
-                    type="text"
-                    name="emergencyContact.relationship"
+                  <select
+                    name="template"
+                    required
                     className="input-field"
-                    placeholder="e.g., Spouse, Parent"
-                    value={formData.emergencyContact.relationship}
+                    value={formData.template}
                     onChange={handleChange}
-                  />
+                  >
+                    <option value="general">General</option>
+                    <option value="cardiac">Cardiac</option>
+                    <option value="diabetic">Diabetic</option>
+                  </select>
                 </div>
               </div>
-            </div>
 
-            {/* Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes
-              </label>
-              <textarea
-                name="notes"
-                rows="3"
-                className="input-field"
-                value={formData.notes}
-                onChange={handleChange}
-              />
-            </div>
+              {/* Consent Checkbox */}
+              <div
+                className="p-4 rounded-lg"
+                style={{ background: 'var(--bg-tertiary)' }}
+              >
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="consent"
+                    checked={formData.consent}
+                    onChange={handleChange}
+                    className="w-5 h-5 rounded"
+                    style={{
+                      accentColor: 'var(--brand-primary)'
+                    }}
+                  />
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    Patient has provided consent for monitoring
+                  </span>
+                </label>
+              </div>
 
-            {/* Buttons */}
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary flex-1 disabled:opacity-50"
+              {/* Emergency Contact */}
+              <div
+                className="pt-6"
+                style={{ borderTop: '1px solid var(--border-subtle)' }}
               >
-                {loading ? 'Saving...' : isEdit ? 'Update Patient' : 'Create Patient'}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/patients')}
-                className="btn-secondary flex-1"
+                <div className="flex items-center gap-2 mb-4">
+                  <Phone size={18} style={{ color: 'var(--brand-primary)' }} />
+                  <h3
+                    className="text-lg font-semibold"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Emergency Contact
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      name="emergencyContact.name"
+                      className="input-field"
+                      value={formData.emergencyContact.name}
+                      onChange={handleChange}
+                      placeholder="Contact name"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      name="emergencyContact.phone"
+                      className="input-field"
+                      value={formData.emergencyContact.phone}
+                      onChange={handleChange}
+                      placeholder="Contact phone"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      Relationship
+                    </label>
+                    <input
+                      type="text"
+                      name="emergencyContact.relationship"
+                      className="input-field"
+                      placeholder="e.g., Spouse, Parent"
+                      value={formData.emergencyContact.relationship}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div
+                className="pt-6"
+                style={{ borderTop: '1px solid var(--border-subtle)' }}
               >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={18} style={{ color: 'var(--brand-primary)' }} />
+                  <h3
+                    className="text-lg font-semibold"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Notes
+                  </h3>
+                </div>
+                <textarea
+                  name="notes"
+                  rows="3"
+                  className="input-field"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  placeholder="Additional notes about the patient..."
+                />
+              </div>
+
+              {/* Buttons */}
+              <div
+                className="flex gap-4 pt-6"
+                style={{ borderTop: '1px solid var(--border-subtle)' }}
+              >
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary flex-1 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="spinner" />
+                      Saving...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <Save size={18} />
+                      {isEdit ? 'Update Patient' : 'Create Patient'}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/patients')}
+                  className="btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </motion.div>
+      </main>
     </div>
   );
 };

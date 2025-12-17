@@ -2,6 +2,7 @@ const express = require('express');
 const { query, body, validationResult } = require('express-validator');
 const Alert = require('../models/Alert');
 const { protect } = require('../middleware/auth');
+const { logAudit, ACTIONS } = require('../utils/auditLogger');
 
 const router = express.Router();
 
@@ -191,6 +192,17 @@ router.put(
       
       await alert.save();
       await alert.populate('patient resolvedBy', 'name mrn ward');
+
+      // Log alert resolution
+      await logAudit({
+        action: ACTIONS.ALERT_RESOLVE,
+        userId: req.user._id,
+        resourceType: 'alert',
+        resourceId: alert._id,
+        resourceName: alert.patient?.name,
+        details: `Resolved ${alert.severity} severity alert for ${alert.patient?.name || 'patient'}`,
+        req
+      });
 
       res.json({
         success: true,

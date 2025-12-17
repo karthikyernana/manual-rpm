@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Edit, Trash2, Save, X, Clipboard } from 'lucide-react';
 import Modal from '../../components/Modal';
 import api from '../../services/api';
 import toast from '../../utils/toast';
 import { validators, sanitizeInput } from '../../utils/validation';
 
-// This is the content version without Navbar - for use in Settings
 const TemplatesContent = () => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +33,7 @@ const TemplatesContent = () => {
       }
     } catch (error) {
       console.error('Error fetching templates:', error);
+      toast.error('Failed to fetch templates');
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,6 @@ const TemplatesContent = () => {
     }
     setFormData({ ...formData, fields: newFields });
 
-    // Validate field in real-time
     const newFieldErrors = { ...fieldErrors };
     const fieldKey = `field-${index}-${field}`;
     
@@ -106,7 +106,6 @@ const TemplatesContent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
     const errors = {};
     if (!formData.name || !formData.name.trim()) {
       errors.name = 'Template name is required';
@@ -115,7 +114,6 @@ const TemplatesContent = () => {
       errors.fields = 'At least one field is required';
     }
     
-    // Validate each field
     formData.fields.forEach((field, index) => {
       if (!field.name || !field.name.trim()) {
         errors[`field-${index}-name`] = 'Field name is required';
@@ -143,7 +141,6 @@ const TemplatesContent = () => {
       return;
     }
     
-    // Sanitize inputs
     const sanitizedData = {
       ...formData,
       name: sanitizeInput(formData.name),
@@ -211,78 +208,176 @@ const TemplatesContent = () => {
     });
   };
 
+  const getCategoryColor = (category) => {
+    const colors = {
+      general: { bg: 'var(--info-muted)', text: 'var(--info)' },
+      cardiac: { bg: 'var(--error-muted)', text: 'var(--error)' },
+      diabetic: { bg: 'rgba(168, 85, 247, 0.15)', text: '#a855f7' },
+      respiratory: { bg: 'var(--warning-muted)', text: 'var(--warning)' },
+      custom: { bg: 'var(--brand-muted)', text: 'var(--brand-primary)' }
+    };
+    return colors[category] || colors.custom;
+  };
+
+
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Vitals Templates</h2>
-          <p className="text-gray-600 mt-1">Create custom templates for different conditions</p>
+          <h2
+            className="text-xl font-bold"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            Vitals Templates
+          </h2>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Create custom templates for different conditions
+          </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center space-x-2"
-        >
+        <button onClick={() => setShowModal(true)} className="btn-primary">
           <Plus size={18} />
           <span>New Template</span>
         </button>
       </div>
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading templates...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={`skeleton-${i}`}
+              className="card"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <div className="skeleton w-32 h-5 rounded mb-2" />
+              <div className="skeleton w-48 h-4 rounded mb-4" />
+              <div className="flex gap-2 mb-4">
+                <div className="skeleton w-16 h-5 rounded-full" />
+                <div className="skeleton w-16 h-5 rounded-full" />
+              </div>
+              <div className="skeleton w-full h-8 rounded" />
+            </motion.div>
+          ))}
+        </div>
+      ) : templates.length === 0 ? (
+        <div className="card empty-state py-16">
+          <Clipboard size={48} style={{ color: 'var(--text-tertiary)' }} className="mb-4" />
+          <h3
+            className="text-lg font-semibold mb-2"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            No templates yet
+          </h3>
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
+            Create a custom template to get started
+          </p>
+          <button onClick={() => setShowModal(true)} className="btn-primary">
+            <Plus size={18} />
+            New Template
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((template) => (
-            <div key={template._id} className="card hover:shadow-lg transition-all duration-200 hover-lift">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-gray-900">{template.name}</h3>
-                  <p className="text-sm text-gray-600">{template.description}</p>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      template.isPublic ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {template.isPublic ? 'Public' : 'Private'}
-                    </span>
-                    <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                      {template.category}
-                    </span>
+          {templates.map((template, index) => {
+            const categoryColor = getCategoryColor(template.category);
+            return (
+              <motion.div
+                key={template._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+                className="card-interactive group"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h3
+                      className="font-semibold"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {template.name}
+                    </h3>
+                    <p
+                      className="text-sm line-clamp-2"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {template.description || 'No description'}
+                    </p>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleEdit(template)}
+                      className="btn-icon"
+                      title="Edit template"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(template._id)}
+                      className="btn-icon"
+                      style={{ color: 'var(--error)' }}
+                      title="Delete template"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => handleEdit(template)}
-                    className="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors"
-                    title="Edit template"
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span
+                    className="badge text-xs"
+                    style={{
+                      background: template.isPublic ? 'var(--info-muted)' : 'var(--bg-tertiary)',
+                      color: template.isPublic ? 'var(--info)' : 'var(--text-secondary)'
+                    }}
                   >
-                    <Edit size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(template._id)}
-                    className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors"
-                    title="Delete template"
+                    {template.isPublic ? 'Public' : 'Private'}
+                  </span>
+                  <span
+                    className="badge text-xs capitalize"
+                    style={{ background: categoryColor.bg, color: categoryColor.text }}
                   >
-                    <Trash2 size={18} />
-                  </button>
+                    {template.category}
+                  </span>
                 </div>
-              </div>
-              <div className="border-t pt-3 mt-3">
-                <p className="text-xs text-gray-500 mb-2">{template.fields.length} fields</p>
-                <div className="flex flex-wrap gap-1">
-                  {template.fields.slice(0, 5).map((field, idx) => (
-                    <span key={idx} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                      {field.label}
-                    </span>
-                  ))}
-                  {template.fields.length > 5 && (
-                    <span className="text-xs text-gray-500">+{template.fields.length - 5} more</span>
-                  )}
+
+                <div
+                  className="pt-3"
+                  style={{ borderTop: '1px solid var(--border-subtle)' }}
+                >
+                  <p
+                    className="text-xs mb-2"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    {template.fields.length} fields
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {template.fields.slice(0, 4).map((field, idx) => (
+                      <span
+                        key={idx}
+                        className="text-xs px-2 py-1 rounded"
+                        style={{
+                          background: 'var(--bg-tertiary)',
+                          color: 'var(--text-secondary)'
+                        }}
+                      >
+                        {field.label}
+                      </span>
+                    ))}
+                    {template.fields.length > 4 && (
+                      <span
+                        className="text-xs"
+                        style={{ color: 'var(--text-tertiary)' }}
+                      >
+                        +{template.fields.length - 4} more
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
@@ -296,13 +391,16 @@ const TemplatesContent = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 Template Name*
               </label>
               <input
                 type="text"
                 required
-                className={`input-field ${formErrors.name ? 'border-red-500' : ''}`}
+                className={`input-field ${formErrors.name ? 'input-error' : ''}`}
                 value={formData.name}
                 onChange={(e) => {
                   setFormData({ ...formData, name: e.target.value });
@@ -314,11 +412,16 @@ const TemplatesContent = () => {
                 placeholder="e.g., Hypertension Monitoring"
               />
               {formErrors.name && (
-                <p className="text-xs text-red-600 mt-1">{formErrors.name}</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>
+                  {formErrors.name}
+                </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 Category*
               </label>
               <select
@@ -337,7 +440,10 @@ const TemplatesContent = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Description
             </label>
             <textarea
@@ -350,37 +456,62 @@ const TemplatesContent = () => {
           </div>
 
           {formErrors.fields && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-800">{formErrors.fields}</p>
+            <div
+              className="p-3 rounded-lg"
+              style={{ background: 'var(--error-muted)', border: '1px solid var(--error)' }}
+            >
+              <p className="text-sm" style={{ color: 'var(--error)' }}>
+                {formErrors.fields}
+              </p>
             </div>
           )}
 
-          <div className="border-t pt-4">
+          <div
+            className="pt-4"
+            style={{ borderTop: '1px solid var(--border-subtle)' }}
+          >
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-gray-900">Fields</h3>
+              <h3
+                className="font-semibold"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                Fields
+              </h3>
               <button
                 type="button"
                 onClick={handleAddField}
-                className="btn-secondary text-sm flex items-center space-x-1"
+                className="btn-secondary text-sm"
               >
                 <Plus size={16} />
                 <span>Add Field</span>
               </button>
             </div>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-3 max-h-80 overflow-y-auto">
               {formData.fields.map((field, index) => (
-                <div key={index} className="card bg-gray-50 relative">
+                <motion.div
+                  key={index}
+                  className="card relative"
+                  style={{ background: 'var(--bg-tertiary)' }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
                   <button
                     type="button"
                     onClick={() => handleRemoveField(index)}
-                    className="absolute top-2 right-2 text-red-600 hover:bg-red-50 p-1 rounded"
+                    className="absolute top-2 right-2 btn-icon"
+                    style={{ color: 'var(--error)' }}
                   >
                     <X size={16} />
                   </button>
                   <div className="grid grid-cols-2 gap-3 pr-8">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Field Name*</label>
+                      <label
+                        className="block text-xs font-medium mb-1"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        Field Name*
+                      </label>
                       <input
                         type="text"
                         required
@@ -391,7 +522,12 @@ const TemplatesContent = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Label*</label>
+                      <label
+                        className="block text-xs font-medium mb-1"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        Label*
+                      </label>
                       <input
                         type="text"
                         required
@@ -402,7 +538,12 @@ const TemplatesContent = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Unit*</label>
+                      <label
+                        className="block text-xs font-medium mb-1"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        Unit*
+                      </label>
                       <input
                         type="text"
                         required
@@ -414,7 +555,12 @@ const TemplatesContent = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Normal Min</label>
+                        <label
+                          className="block text-xs font-medium mb-1"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          Normal Min
+                        </label>
                         <input
                           type="number"
                           step="0.1"
@@ -424,7 +570,12 @@ const TemplatesContent = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Normal Max</label>
+                        <label
+                          className="block text-xs font-medium mb-1"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          Normal Max
+                        </label>
                         <input
                           type="number"
                           step="0.1"
@@ -435,16 +586,24 @@ const TemplatesContent = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
               {formData.fields.length === 0 && (
-                <p className="text-center text-gray-500 py-8">No fields added yet. Click "Add Field" to start.</p>
+                <p
+                  className="text-center py-8"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  No fields added yet. Click "Add Field" to start.
+                </p>
               )}
             </div>
           </div>
 
-          <div className="flex space-x-4 pt-4 border-t">
-            <button type="submit" className="btn-primary flex-1 flex items-center justify-center space-x-2">
+          <div
+            className="flex gap-3 pt-4"
+            style={{ borderTop: '1px solid var(--border-subtle)' }}
+          >
+            <button type="submit" className="btn-primary flex-1">
               <Save size={18} />
               <span>{editingTemplate ? 'Update Template' : 'Create Template'}</span>
             </button>

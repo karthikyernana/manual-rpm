@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit2, Share2, FileText, Table, Activity, Trash2, Calendar, User } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
 import Modal from '../components/Modal';
@@ -150,20 +150,12 @@ const PatientDetailPage = () => {
 
   const handleExportCSV = async () => {
     try {
-      await downloadCSV(id);
+      await downloadCSV(id, patient?.name);
     } catch (error) {
       console.error('Error exporting CSV:', error);
       toast.error('Failed to export CSV');
     }
   };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-
-  if (!patient) {
-    return <div className="min-h-screen flex items-center justify-center">Patient not found</div>;
-  }
 
   const handleDeleteVital = async (vitalId) => {
     if (!confirm('Delete this vital record? This action cannot be undone.')) return;
@@ -172,6 +164,7 @@ const PatientDetailPage = () => {
       await api.delete(`/vitals/${vitalId}`);
       toast.success('Vital record deleted successfully');  
       fetchVitals(); // Refresh the list
+      fetchTrends();
     } catch (error) {
       console.error('Error deleting vital:', error);
       const errorMsg = error.response?.data?.message || 'Failed to delete vital record';
@@ -179,147 +172,259 @@ const PatientDetailPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="page-container">
+        <Navbar />
+        <main className="page-content">
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center" style={{ color: 'var(--text-secondary)' }}>
+              Loading patient data...
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="page-container">
+        <Navbar />
+        <main className="page-content">
+          <div className="card empty-state py-16">
+            <User size={48} style={{ color: 'var(--text-tertiary)' }} className="mb-4" />
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+              Patient not found
+            </h3>
+            <Link to="/patients" className="btn-primary mt-4">
+              <ArrowLeft size={16} />
+              Back to Patients
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const chartColors = [
+    '#10b981', // emerald
+    '#3b82f6', // blue
+    '#f59e0b', // amber
+    '#ef4444', // red
+    '#8b5cf6', // violet
+    '#06b6d4', // cyan
+    '#ec4899', // pink
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-container">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <Link to="/patients" className="text-primary-600 hover:text-primary-800 mb-4 inline-block">
-          ← Back to Patients
+      <main className="page-content">
+        {/* Back Link */}
+        <Link
+          to="/patients"
+          className="inline-flex items-center gap-2 mb-4 text-sm font-medium hover:opacity-80 transition-opacity"
+          style={{ color: 'var(--brand-primary)' }}
+        >
+          <ArrowLeft size={16} />
+          Back to Patients
         </Link>
         
         {/* Patient Info Header */}
         <div className="card mb-6">
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{patient.name}</h1>
-              <p className="text-gray-600 mt-1">MRN: {patient.mrn} • {patient.gender} • {new Date(patient.dob).toLocaleDateString()}</p>
-              <p className="text-gray-600">Ward: {patient.ward} {patient.bed && `- Bed ${patient.bed}`}</p>
+              <h1
+                className="text-2xl font-bold"
+                style={{ color: 'var(--brand-primary)' }}
+              >
+                {patient.name}
+              </h1>
+              <p
+                className="text-sm mt-1"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                MRN: {patient.mrn} • {patient.gender} • {new Date(patient.dob).toLocaleDateString()}
+              </p>
+              <p
+                className="text-sm"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Ward: {patient.ward} {patient.bed && `- Bed ${patient.bed}`}
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link to={`/patients/${id}/edit`} className="btn-secondary">Edit</Link>
-              <button onClick={() => setShowShareModal(true)} className="btn-secondary">📤 Share</button>
-              <button onClick={handleExportPDF} className="btn-secondary">📄 PDF</button>
-              <button onClick={handleExportCSV} className="btn-secondary">📊 CSV</button>
+              <Link to={`/patients/${id}/edit`} className="btn-secondary">
+                <Edit2 size={16} />
+                Edit
+              </Link>
+              <button onClick={() => setShowShareModal(true)} className="btn-secondary">
+                <Share2 size={16} />
+                Share
+              </button>
+              <button onClick={handleExportPDF} className="btn-secondary">
+                <FileText size={16} />
+                PDF
+              </button>
+              <button onClick={handleExportCSV} className="btn-secondary">
+                <Table size={16} />
+                CSV
+              </button>
               <button onClick={() => setShowVitalsForm(true)} className="btn-primary">
+                <Activity size={16} />
                 Record Vitals
               </button>
             </div>
           </div>
         </div>
 
-        {/* Record Vitals Modal */}
-        {showVitalsForm && (
-          <Modal isOpen={showVitalsForm} onClose={() => setShowVitalsForm(false)} title="Record New Vitals">
-            <form onSubmit={handleSubmitVitals}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {template && template.fields.map(field => (
-                  <div key={field.name}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {field.label}
-                    </label>
-                    {field.unit === 'boolean' ? (
-                      <select
-                        name={field.name}
-                        className="input-field"
-                        value={formData[field.name]}
-                        onChange={handleInputChange}
-                      >
-                        <option value="">Select...</option>
-                        <option value="true">Yes</option>
-                        <option value="false">No</option>
-                      </select>
-                    ) : (
-                      <input
-                        type="number"
-                        name={field.name}
-                        step="0.1"
-                        min={field.min}
-                        max={field.max}
-                        className="input-field"
-                        value={formData[field.name]}
-                        onChange={handleInputChange}
-                        placeholder={field.normal ? `Normal: ${field.normal.min}-${field.normal.max}` : ''}
-                      />
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">{field.unit}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="flex space-x-4">
-                <button type="submit" className="btn-primary">Save Vitals</button>
-                <button type="button" onClick={() => setShowVitalsForm(false)} className="btn-secondary">Cancel</button>
-              </div>
-            </form>
-          </Modal>
-        )}
-
-
         {/* Trend Chart */}
         {trendData.length > 0 && (
           <div className="card mb-6">
-            <h2 className="text-xl font-semibold mb-4">7-Day Vitals Trend</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                {template && template.fields.filter(f => f.unit !== 'boolean').map((field, index) => (
-                  <Line
-                    key={field.name}
-                    type="monotone"
-                    dataKey={field.name}
-                    stroke={`hsl(${index * 60}, 70%, 50%)`}
-                    name={field.label}
+            <h2
+              className="section-title"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              7-Day Vitals Trend
+            </h2>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                    stroke="var(--border-default)"
                   />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
+                  <YAxis
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                    stroke="var(--border-default)"
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                  <Legend />
+                  {template && template.fields.filter(f => f.unit !== 'boolean').map((field, index) => (
+                    <Line
+                      key={field.name}
+                      type="monotone"
+                      dataKey={field.name}
+                      stroke={chartColors[index % chartColors.length]}
+                      name={field.label}
+                      strokeWidth={2}
+                      dot={{ fill: chartColors[index % chartColors.length], strokeWidth: 2 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         )}
 
         {/* Vitals History */}
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Vitals History</h2>
+          <h2
+            className="section-title"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            Vitals History
+          </h2>
           {vitals.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">No vitals recorded yet</p>
+            <div className="empty-state py-8">
+              <Activity size={40} style={{ color: 'var(--text-tertiary)' }} className="mb-3" />
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                No vitals recorded yet
+              </p>
+              <button onClick={() => setShowVitalsForm(true)} className="btn-primary mt-4">
+                <Activity size={16} />
+                Record First Vitals
+              </button>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {vitals.map((vital) => (
-                <div key={vital._id} className="bg-white p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:shadow-md">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <p className="text-sm text-gray-600">{new Date(vital.recordedAt).toLocaleString()}</p>
-                      {vital.flagged && (
-                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
-                          ⚠️ Flagged
+                <div
+                  key={vital._id}
+                  className="p-4 rounded-lg transition-all duration-200"
+                  style={{
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-subtle)'
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className="text-sm flex items-center gap-1"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          <Calendar size={14} />
+                          {new Date(vital.recordedAt).toLocaleString()}
                         </span>
+                        {vital.flagged && (
+                          <span
+                            className="badge text-xs"
+                            style={{ background: 'var(--error-muted)', color: 'var(--error)' }}
+                          >
+                            Flagged
+                          </span>
+                        )}
+                      </div>
+                      {vital.recordedBy && (
+                        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                          Recorded by: {vital.recordedBy.name} ({vital.recordedBy.role})
+                        </p>
                       )}
                     </div>
-                    {vital.recordedBy && (
-                      <p className="text-xs text-gray-500">
-                        Recorded by: {vital.recordedBy.name} ({vital.recordedBy.role})
-                      </p>
-                    )}
+                    <button
+                      onClick={() => handleDeleteVital(vital._id)}
+                      className="btn-icon"
+                      style={{ color: 'var(--error)' }}
+                      title="Delete this vital record"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteVital(vital._id)}
-                    className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors"
-                    title="Delete this vital record"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    {Object.entries(vital.vitals).map(([key, value]) => (
-                      <div key={key} className={vital.flaggedFields?.some(f => f.field === key) ? 'text-red-700 font-semibold' : ''}>
-                        <span className="text-gray-600">{key}: </span>
-                        <span>{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}</span>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {Object.entries(vital.vitals).map(([key, value]) => {
+                      const isFlagged = vital.flaggedFields?.some(f => f.field === key);
+                      const field = template?.fields?.find(f => f.name === key);
+                      return (
+                        <div
+                          key={key}
+                          className="p-2 rounded"
+                          style={{
+                            background: isFlagged ? 'var(--error-muted)' : 'var(--bg-secondary)',
+                            border: isFlagged ? '1px solid var(--error)' : '1px solid transparent'
+                          }}
+                        >
+                          <p
+                            className="text-xs mb-1"
+                            style={{ color: isFlagged ? 'var(--error)' : 'var(--text-tertiary)' }}
+                          >
+                            {field?.label || key}
+                          </p>
+                          <p
+                            className="font-semibold text-sm"
+                            style={{ color: isFlagged ? 'var(--error)' : 'var(--text-primary)' }}
+                          >
+                            {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+                            {field?.unit && field.unit !== 'boolean' && (
+                              <span className="font-normal text-xs ml-1" style={{ color: 'var(--text-tertiary)' }}>
+                                {field.unit}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -340,8 +445,12 @@ const PatientDetailPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               {template.fields.map(field => (
                 <div key={field.name}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
                     {field.label}
+                    {field.required && <span style={{ color: 'var(--error)' }}>*</span>}
                   </label>
                   {field.unit === 'boolean' ? (
                     <select
@@ -364,15 +473,21 @@ const PatientDetailPage = () => {
                       className="input-field"
                       value={formData[field.name]}
                       onChange={handleInputChange}
-                      placeholder={field.normal ? `Normal: ${field.normal.min}-${field.normal.max}` : ''}
+                      placeholder={field.normal ? `Normal: ${field.normal.min}-${field.normal.max}` : `Enter ${field.label.toLowerCase()}`}
                     />
                   )}
-                  <p className="text-xs text-gray-500 mt-1">{field.unit}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                    {field.unit !== 'boolean' ? field.unit : ''}
+                    {field.normal && ` (Normal: ${field.normal.min}-${field.normal.max})`}
+                  </p>
                 </div>
               ))}
             </div>
-            <div className="flex space-x-4">
-              <button type="submit" className="btn-primary flex-1">Save Vitals</button>
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary flex-1">
+                <Activity size={16} />
+                Save Vitals
+              </button>
               <button 
                 type="button" 
                 onClick={() => setShowVitalsForm(false)} 

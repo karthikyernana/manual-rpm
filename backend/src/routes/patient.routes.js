@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Patient = require('../models/Patient');
 const { protect } = require('../middleware/auth');
+const { logAudit, ACTIONS } = require('../utils/auditLogger');
 
 const router = express.Router();
 
@@ -65,6 +66,17 @@ router.post(
 
       // Populate primary nurse details
       await patient.populate('primaryNurse', 'name email role');
+
+      // Log the creation
+      await logAudit({
+        action: ACTIONS.PATIENT_CREATE,
+        userId: req.user._id,
+        resourceType: 'patient',
+        resourceId: patient._id,
+        resourceName: patient.name,
+        details: `Created patient ${patient.name} (MRN: ${patient.mrn})`,
+        req
+      });
 
       res.status(201).json({
         success: true,
@@ -229,6 +241,17 @@ router.put(
       await patient.save();
       await patient.populate('primaryNurse primaryDoctor', 'name email role');
 
+      // Log the update
+      await logAudit({
+        action: ACTIONS.PATIENT_UPDATE,
+        userId: req.user._id,
+        resourceType: 'patient',
+        resourceId: patient._id,
+        resourceName: patient.name,
+        details: `Updated patient ${patient.name} (MRN: ${patient.mrn})`,
+        req
+      });
+
       res.json({
         success: true,
         message: 'Patient updated successfully',
@@ -262,6 +285,17 @@ router.delete('/:id', async (req, res) => {
     // Soft delete
     patient.active = false;
     await patient.save();
+
+    // Log the deletion
+    await logAudit({
+      action: ACTIONS.PATIENT_DELETE,
+      userId: req.user._id,
+      resourceType: 'patient',
+      resourceId: patient._id,
+      resourceName: patient.name,
+      details: `Deleted patient ${patient.name} (MRN: ${patient.mrn})`,
+      req
+    });
 
     res.json({
       success: true,

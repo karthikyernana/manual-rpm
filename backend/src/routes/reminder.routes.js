@@ -2,6 +2,7 @@ const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const Reminder = require('../models/Reminder');
 const { protect } = require('../middleware/auth');
+const { logAudit, ACTIONS } = require('../utils/auditLogger');
 
 const router = express.Router();
 
@@ -126,43 +127,16 @@ router.post(
 
       await reminder.populate('patient', 'name mrn ward');
 
-      res.status(201).json({
-        success: true,
-        message: 'Reminder created successfully',
-        data: { reminder }
+      // Log reminder creation
+      await logAudit({
+        action: ACTIONS.REMINDER_CREATE,
+        userId: req.user._id,
+        resourceType: 'reminder',
+        resourceId: reminder._id,
+        resourceName: patientDoc.name,
+        details: `Created ${type} reminder for ${patientDoc.name}: ${title}`,
+        req
       });
-    } catch (error) {
-      console.error('Create reminder error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error creating reminder',
-        error: error.message
-      });
-    }
-  }
-);
-
-// @route   POST /api/v1/reminders
-// @desc    Create new reminder
-// @access  Private
-router.post(
-  '/',
-  [
-    body('patient').isMongoId().withMessage('Valid patient ID is required'),
-    body('type').isIn(['vitals_due', 'medication', 'appointment', 'custom']),
-    body('title').notEmpty().withMessage('Title is required'),
-    body('dueDate').isISO8601().withMessage('Valid due date is required'),
-    body('priority').optional().isIn(['low', 'medium', 'high'])
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const reminder = await Reminder.create({
-        ...req.body,
-        createdBy: req.user._id
-      });
-
-      await reminder.populate('patient', 'name mrn ward');
 
       res.status(201).json({
         success: true,
@@ -244,6 +218,17 @@ router.put('/:id/complete', async (req, res) => {
     
     await reminder.save();
     await reminder.populate('patient completedBy', 'name mrn ward');
+
+    // Log reminder completion
+    await logAudit({
+      action: ACTIONS.REMINDER_COMPLETE,
+      userId: req.user._id,
+      resourceType: 'reminder',
+      resourceId: reminder._id,
+      resourceName: reminder.patient?.name,
+      details: `Completed reminder: ${reminder.title}`,
+      req
+    });
 
     res.json({
       success: true,

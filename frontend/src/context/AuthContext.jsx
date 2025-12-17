@@ -43,12 +43,11 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/register', userData);
       
       if (response.data.success) {
-        const { user, token } = response.data.data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        setUser(user);
-        return { success: true };
+        // Note: Admin-created users don't receive a token - they need to login separately
+        // This function is primarily used by admin to create accounts
+        return { success: true, user: response.data.data.user };
       }
+      return { success: false, message: 'Registration failed' };
     } catch (error) {
       return {
         success: false,

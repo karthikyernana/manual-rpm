@@ -3,6 +3,7 @@ const { body, validationResult, query } = require('express-validator');
 const Vitals = require('../models/Vitals');
 const Patient = require('../models/Patient');
 const { protect } = require('../middleware/auth');
+const { logAudit, ACTIONS } = require('../utils/auditLogger');
 
 const router = express.Router();
 
@@ -20,6 +21,37 @@ const validate = (req, res, next) => {
   }
   next();
 };
+
+// @route   GET /api/v1/vitals/stats
+// @desc    Get vitals statistics (today's count, etc.)
+// @access  Private
+router.get('/stats', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const [todayCount, totalCount, flaggedToday] = await Promise.all([
+      Vitals.countDocuments({ recordedAt: { $gte: today } }),
+      Vitals.countDocuments(),
+      Vitals.countDocuments({ recordedAt: { $gte: today }, flagged: true })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        todayCount,
+        totalCount,
+        flaggedToday
+      }
+    });
+  } catch (error) {
+    console.error('Get vitals stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching vitals stats'
+    });
+  }
+});
 
 // @route   GET /api/v1/vitals/templates
 // @desc    Get all vital templates
@@ -106,6 +138,17 @@ router.post(
         { path: 'patient', select: 'name mrn ward' },
         { path: 'recordedBy', select: 'name role' }
       ]);
+
+      // Log vitals recording
+      await logAudit({
+        action: ACTIONS.VITALS_RECORD,
+        userId: req.user._id,
+        resourceType: 'vitals',
+        resourceId: vitalsRecord._id,
+        resourceName: patientDoc.name,
+        details: `Recorded vitals for ${patientDoc.name}${vitalsRecord.flagged ? ' (FLAGGED)' : ''}`,
+        req
+      });
 
       res.status(201).json({
         success: true,
@@ -246,6 +289,16 @@ router.delete('/:id', async (req, res) => {
 
     await vitals.deleteOne();
 
+    // Log vitals deletion
+    await logAudit({
+      action: ACTIONS.VITALS_DELETE,
+      userId: req.user._id,
+      resourceType: 'vitals',
+      resourceId: vitals._id,
+      details: `Deleted vitals record`,
+      req
+    });
+
     res.json({
       success: true,
       message: 'Vitals record deleted successfully'
@@ -255,36 +308,6 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting vitals record',
-      error: error.message
-    });
-  }
-});
-
-// @route   DELETE /api/v1/vitals/:id
-// @desc    Delete a vital record
-// @access  Private (doctors, nurses, admins only)
-router.delete('/:id', protect, async (req, res) => {
-  try {
-    const vital = await Vitals.findById(req.params.id);
-
-    if (!vital) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vital record not found'
-      });
-    }
-
-    await vital.deleteOne();
-
-    res.json({
-      success: true,
-      message: 'Vital record deleted successfully'
-    });
-  } catch (error) {
-    console.error('Delete vital error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting vital record',
       error: error.message
     });
   }

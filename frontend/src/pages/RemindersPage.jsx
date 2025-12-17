@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, CheckCircle, XCircle, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Clock, 
+  CheckCircle, 
+  Plus, 
+  Bell,
+  User,
+  Calendar,
+  RefreshCw,
+  AlarmClock
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Modal from '../components/Modal';
 import api from '../services/api';
@@ -26,7 +36,7 @@ const RemindersPage = () => {
   useEffect(() => {
     fetchReminders();
     fetchPatients();
-  }, []);
+  }, [filter]);
 
   const fetchPatients = async () => {
     try {
@@ -51,6 +61,7 @@ const RemindersPage = () => {
       }
     } catch (error) {
       console.error('Error fetching reminders:', error);
+      toast.error('Failed to fetch reminders');
     } finally {
       setLoading(false);
     }
@@ -82,35 +93,46 @@ const RemindersPage = () => {
   const handleSnooze = async (id) => {
     const hours = prompt('Snooze for how many hours? (1-72)');
     if (!hours || isNaN(hours) || hours < 1 || hours > 72) {
-      alert('Please enter a valid number between 1 and 72');
+      toast.error('Please enter a valid number between 1 and 72');
       return;
     }
 
     try {
       await api.put(`/reminders/${id}/snooze`, { hours: parseInt(hours) });
+      toast.success('Reminder snoozed');
       fetchReminders();
     } catch (error) {
       console.error('Error snoozing reminder:', error);
-      alert('Failed to snooze reminder');
+      toast.error('Failed to snooze reminder');
     }
   };
 
   const handleComplete = async (id) => {
     try {
       await api.put(`/reminders/${id}/complete`);
+      toast.success('Reminder completed');
       fetchReminders();
     } catch (error) {
       console.error('Error completing reminder:', error);
-      alert('Failed to complete reminder');
+      toast.error('Failed to complete reminder');
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'border-l-4 border-red-500';
-      case 'medium': return 'border-l-4 border-yellow-500';
-      case 'low': return 'border-l-4 border-blue-500';
-      default: return 'border-l-4 border-gray-300';
+  const getPriorityStyles = (priority) => {
+    const styles = {
+      high: { border: 'var(--error)', bg: 'var(--error-muted)', text: 'var(--error)' },
+      medium: { border: 'var(--warning)', bg: 'var(--warning-muted)', text: 'var(--warning)' },
+      low: { border: 'var(--info)', bg: 'var(--info-muted)', text: 'var(--info)' }
+    };
+    return styles[priority] || styles.medium;
+  };
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'vitals_due': return Bell;
+      case 'medication': return AlarmClock;
+      case 'appointment': return Calendar;
+      default: return Clock;
     }
   };
 
@@ -122,119 +144,220 @@ const RemindersPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-container">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Reminders</h1>
-            <p className="text-gray-600 mt-1">Manage patient reminders and tasks</p>
-          </div>
+      <main className="page-content">
+        {/* Header Actions */}
+        <motion.div
+          className="flex justify-end mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <button
             onClick={() => setShowModal(true)}
-            className="btn-primary flex items-center space-x-2"
+            className="btn-primary"
           >
             <Plus size={18} />
             <span>Create Reminder</span>
           </button>
-        </div>
+        </motion.div>
 
         {/* Filter Tabs */}
-        <div className="mb-6 flex space-x-2 overflow-x-auto">
+        <motion.div
+          className="flex gap-2 mb-6 overflow-x-auto pb-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
           {filterTabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 ${
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
                 filter === tab.key
-                  ? 'bg-primary-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  ? ''
+                  : 'btn-secondary'
               }`}
+              style={
+                filter === tab.key
+                  ? { background: 'var(--brand-primary)', color: 'white' }
+                  : {}
+              }
             >
               {tab.label}
             </button>
           ))}
-        </div>
+          <button
+            onClick={() => fetchReminders()}
+            className="btn-icon ml-auto"
+            title="Refresh"
+          >
+            <RefreshCw size={16} />
+          </button>
+        </motion.div>
 
         {/* Reminders List */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading reminders...</p>
-          </div>
-        ) : reminders.length === 0 ? (
-          <div className="card text-center py-12">
-            <p className="text-gray-600">No reminders found</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {reminders.map((reminder) => (
-              <div
-                key={reminder._id}
-                className={`card hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${getPriorityColor(reminder.priority)}`}
+        <div className="space-y-3">
+          <AnimatePresence mode="wait">
+            {loading ? (
+              // Loading Skeletons
+              [...Array(4)].map((_, i) => (
+                <motion.div
+                  key={`skeleton-${i}`}
+                  className="card"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="skeleton w-10 h-10 rounded-lg" />
+                    <div className="flex-1">
+                      <div className="skeleton w-24 h-5 rounded mb-2" />
+                      <div className="skeleton w-48 h-4 rounded mb-2" />
+                      <div className="skeleton w-32 h-3 rounded" />
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : reminders.length === 0 ? (
+              <motion.div
+                className="card empty-state py-16"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs font-semibold uppercase">
-                        {reminder.type.replace('_', ' ')}
-                      </span>
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs font-semibold uppercase">
-                        {reminder.priority}
-                      </span>
-                      {reminder.autoGenerated && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                          Auto
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="font-semibold text-lg">{reminder.title}</h3>
-                    {reminder.description && (
-                      <p className="text-sm text-gray-600 mt-1">{reminder.description}</p>
-                    )}
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-                      <Link to={`/patients/${reminder.patient._id}`} className="hover:underline">
-                        {reminder.patient.name} (MRN: {reminder.patient.mrn})
-                      </Link>
-                      <span>Due: {new Date(reminder.dueDate).toLocaleString()}</span>
-                      {reminder.snoozedUntil && (
-                        <span className="text-yellow-600">
-                          Snoozed until: {new Date(reminder.snoozedUntil).toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    {reminder.status === 'pending' || reminder.status === 'snoozed' ? (
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleSnooze(reminder._id)}
-                        className="px-3 py-1 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-all duration-200 transform hover:scale-105 flex items-center space-x-1"
+                <Bell size={48} style={{ color: 'var(--text-tertiary)' }} className="mb-4" />
+                <h3
+                  className="text-lg font-semibold mb-2"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  No reminders found
+                </h3>
+                <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
+                  Create a reminder to get started
+                </p>
+                <button onClick={() => setShowModal(true)} className="btn-primary">
+                  <Plus size={18} />
+                  Create Reminder
+                </button>
+              </motion.div>
+            ) : (
+              reminders.map((reminder, index) => {
+                const priority = getPriorityStyles(reminder.priority);
+                const TypeIcon = getTypeIcon(reminder.type);
+
+                return (
+                  <motion.div
+                    key={reminder._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                    className="card"
+                    style={{ borderLeft: `4px solid ${priority.border}` }}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Icon */}
+                      <div
+                        className="p-2.5 rounded-lg flex-shrink-0"
+                        style={{ background: priority.bg }}
                       >
-                        <Clock size={14} />
-                        <span>Snooze</span>
-                      </button>
-                      <button
-                        onClick={() => handleComplete(reminder._id)}
-                        className="px-3 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-all duration-200 transform hover:scale-105 flex items-center space-x-1"
-                      >
-                        <CheckCircle size={14} />
-                        <span>Complete</span>
-                      </button>
+                        <TypeIcon size={20} style={{ color: priority.text }} />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className="badge text-xs uppercase"
+                            style={{ background: priority.bg, color: priority.text }}
+                          >
+                            {reminder.priority}
+                          </span>
+                          <span className="badge badge-neutral text-xs uppercase">
+                            {reminder.type.replace('_', ' ')}
+                          </span>
+                          {reminder.autoGenerated && (
+                            <span className="badge badge-brand text-xs">Auto</span>
+                          )}
+                        </div>
+
+                        <h3
+                          className="font-semibold"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          {reminder.title}
+                        </h3>
+
+                        {reminder.description && (
+                          <p
+                            className="text-sm mt-1"
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
+                            {reminder.description}
+                          </p>
+                        )}
+
+                        <div
+                          className="flex flex-wrap items-center gap-4 mt-3 text-sm"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          <Link
+                            to={`/patients/${reminder.patient?._id}`}
+                            className="flex items-center gap-1 hover:underline"
+                          >
+                            <User size={14} />
+                            {reminder.patient?.name}
+                          </Link>
+                          <span className="flex items-center gap-1">
+                            <Calendar size={14} />
+                            Due: {new Date(reminder.dueDate).toLocaleString()}
+                          </span>
+                          {reminder.snoozedUntil && (
+                            <span
+                              className="flex items-center gap-1"
+                              style={{ color: 'var(--warning)' }}
+                            >
+                              <AlarmClock size={14} />
+                              Snoozed until: {new Date(reminder.snoozedUntil).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 flex-shrink-0">
+                        {(reminder.status === 'pending' || reminder.status === 'snoozed') && (
+                          <>
+                            <button
+                              onClick={() => handleSnooze(reminder._id)}
+                              className="btn-secondary text-sm"
+                            >
+                              <Clock size={14} />
+                              Snooze
+                            </button>
+                            <button
+                              onClick={() => handleComplete(reminder._id)}
+                              className="btn-primary text-sm"
+                            >
+                              <CheckCircle size={14} />
+                              Complete
+                            </button>
+                          </>
+                        )}
+                        {reminder.status === 'completed' && (
+                          <span className="badge badge-success">
+                            <CheckCircle size={12} className="mr-1" />
+                            Completed
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  ) : null}
-                    {reminder.status === 'completed' && (
-                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded text-sm font-semibold">
-                        ✓ Completed
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
+        </div>
       </main>
 
       {/* Create Reminder Modal */}
@@ -246,7 +369,10 @@ const RemindersPage = () => {
       >
         <form onSubmit={handleCreateReminder} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Patient*
             </label>
             <select
@@ -265,7 +391,10 @@ const RemindersPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Title*
             </label>
             <input
@@ -279,7 +408,10 @@ const RemindersPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Description
             </label>
             <textarea
@@ -293,7 +425,10 @@ const RemindersPage = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 Type*
               </label>
               <select
@@ -311,7 +446,10 @@ const RemindersPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 Priority*
               </label>
               <select
@@ -329,7 +467,10 @@ const RemindersPage = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 Due Date*
               </label>
               <input
@@ -342,7 +483,10 @@ const RemindersPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 Time (Optional)
               </label>
               <input
@@ -355,7 +499,10 @@ const RemindersPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Recurrence
             </label>
             <select
@@ -370,7 +517,7 @@ const RemindersPage = () => {
             </select>
           </div>
 
-          <div className="flex space-x-4 pt-4">
+          <div className="flex gap-3 pt-4">
             <button type="submit" className="btn-primary flex-1">
               Create Reminder
             </button>

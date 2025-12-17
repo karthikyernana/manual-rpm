@@ -1,6 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Stethoscope, Search, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Search, 
+  Plus, 
+  Grid3X3, 
+  List, 
+  Filter,
+  User,
+  MapPin,
+  Calendar,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Eye,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 
@@ -9,12 +25,14 @@ const PatientsPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [ward, setWard] = useState('');
+  const [viewMode, setViewMode] = useState('grid');
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 });
+  const [activeMenu, setActiveMenu] = useState(null);
 
   const fetchPatients = async (page = 1) => {
     try {
       setLoading(true);
-      const params = { page, limit: 10 };
+      const params = { page, limit: 12 };
       if (search) params.search = search;
       if (ward) params.ward = ward;
 
@@ -32,162 +50,366 @@ const PatientsPage = () => {
   };
 
   useEffect(() => {
-    fetchPatients();
+    const debounce = setTimeout(() => {
+      fetchPatients(1);
+    }, 300);
+    return () => clearTimeout(debounce);
   }, [search, ward]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this patient?')) return;
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Delete patient "${name}"? This action cannot be undone.`)) return;
 
     try {
       await api.delete(`/patients/${id}`);
       fetchPatients(pagination.page);
     } catch (error) {
       console.error('Error deleting patient:', error);
-      alert('Failed to delete patient');
     }
   };
 
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getTemplateColor = (template) => {
+    const colors = {
+      cardiac: { bg: 'var(--error-muted)', text: 'var(--error)' },
+      diabetic: { bg: 'rgba(168, 85, 247, 0.15)', text: '#a855f7' },
+      general: { bg: 'var(--info-muted)', text: 'var(--info)' }
+    };
+    return colors[template] || colors.general;
+  };
+
+  const wards = ['ICU-1', 'ICU-2', 'General-1', 'Cardiac', 'Pediatric'];
+
+  const PatientCard = ({ patient, index }) => {
+    const templateColor = getTemplateColor(patient.template);
+    const isMenuOpen = activeMenu === patient._id;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05, duration: 0.3 }}
+        className="card-interactive relative group"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-semibold"
+              style={{
+                background: templateColor.bg,
+                color: templateColor.text
+              }}
+            >
+              {getInitials(patient.name)}
+            </div>
+            <div>
+              <h3
+                className="font-semibold text-sm"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {patient.name}
+              </h3>
+              <p
+                className="text-xs"
+                style={{ color: 'var(--text-tertiary)' }}
+              >
+                MRN: {patient.mrn}
+              </p>
+            </div>
+          </div>
+
+          {/* Actions Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setActiveMenu(isMenuOpen ? null : patient._id)}
+              className="btn-icon opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <MoreHorizontal size={16} />
+            </button>
+
+            <AnimatePresence>
+              {isMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setActiveMenu(null)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="absolute right-0 mt-1 w-36 rounded-lg py-1 z-20"
+                    style={{
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-default)',
+                      boxShadow: 'var(--shadow-lg)'
+                    }}
+                  >
+                    <Link
+                      to={`/patients/${patient._id}`}
+                      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--bg-hover)] transition-colors"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <Eye size={14} />
+                      View
+                    </Link>
+                    <Link
+                      to={`/patients/${patient._id}/edit`}
+                      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--bg-hover)] transition-colors"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <Edit size={14} />
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(patient._id, patient.name)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--error-muted)] transition-colors"
+                      style={{ color: 'var(--error)' }}
+                    >
+                      <Trash2 size={14} />
+                      Delete
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Template Badge */}
+        <span
+          className="badge mb-4"
+          style={{
+            background: templateColor.bg,
+            color: templateColor.text
+          }}
+        >
+          {patient.template}
+        </span>
+
+        {/* Details */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <MapPin size={14} />
+            <span>{patient.ward}{patient.bed && ` - Bed ${patient.bed}`}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <User size={14} />
+            <span className="capitalize">{patient.gender}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <Calendar size={14} />
+            <span>{new Date(patient.dob).toLocaleDateString()}</span>
+          </div>
+        </div>
+
+        {/* Quick View Button */}
+        <Link
+          to={`/patients/${patient._id}`}
+          className="mt-4 btn-secondary w-full text-sm"
+        >
+          View Details
+        </Link>
+      </motion.div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-container">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Patients</h1>
-          <Link to="/patients/new" className="btn-primary flex items-center space-x-2">
+      <main className="page-content">
+        {/* Header Actions */}
+        <motion.div
+          className="flex justify-end mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Link to="/patients/new" className="btn-primary">
             <Plus size={18} />
             <span>Add Patient</span>
           </Link>
-        </div>
+        </motion.div>
 
-        {/* Search and Filters */}
-        <div className="card mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search
-              </label>
+        {/* Filters */}
+        <motion.div
+          className="card mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--text-tertiary)' }}
+              />
               <input
                 type="text"
-                placeholder="Name or MRN..."
-                className="input-field"
+                placeholder="Search by name or MRN..."
+                className="input-field pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ward
-              </label>
+
+            {/* Ward Filter */}
+            <div className="relative w-full md:w-48">
+              <Filter
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--text-tertiary)' }}
+              />
               <select
-                className="input-field"
+                className="input-field pl-10 appearance-none cursor-pointer"
                 value={ward}
                 onChange={(e) => setWard(e.target.value)}
               >
                 <option value="">All Wards</option>
-                <option value="ICU-1">ICU-1</option>
-                <option value="ICU-2">ICU-2</option>
-                <option value="General-1">General-1</option>
-                <option value="Cardiac">Cardiac</option>
-                <option value="Pediatric">Pediatric</option>
+                {wards.map((w) => (
+                  <option key={w} value={w}>{w}</option>
+                ))}
               </select>
             </div>
-          </div>
-        </div>
 
-        {/* Patients List */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading patients...</p>
-          </div>
-        ) : patients.length === 0 ? (
-          <div className="card text-center py-12">
-            <p className="text-gray-600">No patients found</p>
-            <Link to="/patients/new" className="btn-primary mt-4 inline-block">
-              Add First Patient
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {patients.map((patient, index) => (
-              <div 
-                key={patient._id} 
-                className="card hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
-                style={{ animationDelay: `${index * 0.05}s` }}
+            {/* View Toggle */}
+            <div
+              className="flex rounded-lg p-1"
+              style={{ background: 'var(--bg-tertiary)' }}
+            >
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-[var(--bg-elevated)]'
+                    : ''
+                }`}
+                style={{
+                  color: viewMode === 'grid' ? 'var(--text-primary)' : 'var(--text-tertiary)'
+                }}
               >
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{patient.name}</h3>
-                    <p className="text-sm text-gray-500">MRN: {patient.mrn}</p>
-                  </div>
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                    patient.template === 'cardiac' ? 'bg-red-100 text-red-800' :
-                    patient.template === 'diabetic' ? 'bg-purple-100 text-purple-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}>
-                    {patient.template}
-                  </span>
-                </div>
-                
-                <div className="space-y-1 text-sm text-gray-600 mb-4">
-                  <p className="flex items-center">
-                    <Stethoscope size={14} className="mr-1" />
-                    Ward: {patient.ward} {patient.bed && `- Bed ${patient.bed}`}
-                  </p>
-                  <p>{patient.gender} • {new Date(patient.dob).toLocaleDateString()}</p>
-                  {patient.primaryNurse && (
-                    <p>Nurse: {patient.primaryNurse.name}</p>
-                  )}
-                </div>
-
-                <div className="flex space-x-2">
-                  <Link
-                    to={`/patients/${patient._id}`}
-                    className="flex-1 text-center px-3 py-2 bg-primary-50 text-primary-700 rounded-lg font-medium hover:bg-primary-100 transition-colors"
-                  >
-                    View
-                  </Link>
-                  <Link
-                    to={`/patients/${patient._id}/edit`}
-                    className="flex-1 text-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(patient._id)}
-                    className="px-3 py-2 bg-red-50 text-red-700 rounded-lg font-medium hover:bg-red-100 transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+                <Grid3X3 size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-[var(--bg-elevated)]'
+                    : ''
+                }`}
+                style={{
+                  color: viewMode === 'list' ? 'var(--text-primary)' : 'var(--text-tertiary)'
+                }}
+              >
+                <List size={18} />
+              </button>
+            </div>
           </div>
-        )}
+        </motion.div>
+
+        {/* Patients Grid/List */}
+        <div
+          className={
+            viewMode === 'grid'
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+              : 'space-y-3'
+          }
+        >
+          <AnimatePresence mode="wait">
+            {loading ? (
+              // Loading Skeletons
+              [...Array(8)].map((_, i) => (
+                <motion.div
+                  key={`skeleton-${i}`}
+                  className="card"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="skeleton w-10 h-10 rounded-lg" />
+                    <div className="flex-1">
+                      <div className="skeleton w-24 h-4 rounded mb-2" />
+                      <div className="skeleton w-16 h-3 rounded" />
+                    </div>
+                  </div>
+                  <div className="skeleton w-16 h-5 rounded-full mb-4" />
+                  <div className="space-y-2">
+                    <div className="skeleton w-full h-4 rounded" />
+                    <div className="skeleton w-3/4 h-4 rounded" />
+                  </div>
+                </motion.div>
+              ))
+            ) : patients.length === 0 ? (
+              <motion.div
+                className="col-span-full card empty-state py-12"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <User size={48} style={{ color: 'var(--text-tertiary)' }} className="mb-4" />
+                <h3
+                  className="text-lg font-semibold mb-2"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  No patients found
+                </h3>
+                <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
+                  {search || ward ? 'Try adjusting your filters' : 'Get started by adding your first patient'}
+                </p>
+                <Link to="/patients/new" className="btn-primary">
+                  <Plus size={18} />
+                  Add Patient
+                </Link>
+              </motion.div>
+            ) : (
+              patients.map((patient, index) => (
+                <PatientCard key={patient._id} patient={patient} index={index} />
+              ))
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Pagination */}
         {pagination.pages > 1 && (
-          <div className="mt-6 flex justify-center space-x-2">
+          <motion.div
+            className="flex items-center justify-center gap-2 mt-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             <button
               onClick={() => fetchPatients(pagination.page - 1)}
               disabled={pagination.page === 1}
               className="btn-secondary disabled:opacity-50"
             >
-              Previous
+              <ChevronLeft size={18} />
             </button>
-            <span className="px-4 py-2 text-gray-700">
+            
+            <span
+              className="px-4 py-2 text-sm"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               Page {pagination.page} of {pagination.pages}
             </span>
+
             <button
               onClick={() => fetchPatients(pagination.page + 1)}
               disabled={pagination.page === pagination.pages}
               className="btn-secondary disabled:opacity-50"
             >
-              Next
+              <ChevronRight size={18} />
             </button>
-          </div>
+          </motion.div>
         )}
       </main>
     </div>

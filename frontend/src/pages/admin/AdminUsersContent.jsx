@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Trash2, UserPlus, Shield, Stethoscope, Briefcase, Edit } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trash2, UserPlus, Shield, Stethoscope, Briefcase, Edit, Users } from 'lucide-react';
 import Modal from '../../components/Modal';
 import api from '../../services/api';
 import toast from '../../utils/toast';
 
-// This is the content version without Navbar - for use in Settings
 const AdminUsersContent = () => {
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -42,14 +42,12 @@ const AdminUsersContent = () => {
     e.preventDefault();
     try {
       if (editingUser) {
-        // Update existing user
         const updateData = {
           name: formData.name,
           email: formData.email,
           role: formData.role,
           phone: formData.phone
         };
-        // Only include password if it was changed
         if (formData.password) {
           updateData.password = formData.password;
         }
@@ -60,7 +58,6 @@ const AdminUsersContent = () => {
           handleCloseModal();
         }
       } else {
-        // Create new user
         const response = await api.post('/auth/register', formData);
         if (response.data.success) {
           toast.success(`${formData.role} account created successfully!`);
@@ -98,97 +95,178 @@ const AdminUsersContent = () => {
 
     try {
       await api.delete(`/auth/users/${id}`);
-      toast.success('User deleted successfully');      fetchUsers();
+      toast.success('User deleted successfully');
+      fetchUsers();
     } catch (error) {
       const errorMsg = error.response?.data?.message || 'Failed to delete user';
-      toast.error('Failed to delete user');
+      toast.error(errorMsg);
     }
   };
 
   const getRoleIcon = (role) => {
-    switch (role) {
-      case 'admin': return <Shield size={20} className="text-purple-600" />;
-      case 'doctor': return <Stethoscope size={20} className="text-blue-600" />;
-      case 'nurse': return <Briefcase size={20} className="text-green-600" />;
-      default: return null;
-    }
+    const icons = {
+      admin: { icon: Shield, color: 'var(--brand-primary)' },
+      doctor: { icon: Stethoscope, color: 'var(--info)' },
+      nurse: { icon: Briefcase, color: 'var(--success)' }
+    };
+    const config = icons[role] || icons.nurse;
+    const Icon = config.icon;
+    return <Icon size={20} style={{ color: config.color }} />;
   };
 
   const getRoleBadge = (role) => {
     const colors = {
-      admin: 'bg-purple-100 text-purple-800',
-      doctor: 'bg-blue-100 text-blue-800',
-      nurse: 'bg-green-100 text-green-800'
+      admin: { bg: 'var(--brand-muted)', text: 'var(--brand-primary)' },
+      doctor: { bg: 'var(--info-muted)', text: 'var(--info)' },
+      nurse: { bg: 'var(--success-muted)', text: 'var(--success)' }
     };
-    return colors[role] || 'bg-gray-100 text-gray-800';
+    return colors[role] || colors.nurse;
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-          <p className="text-gray-600 mt-1">Manage nurses, doctors, and admin accounts</p>
+          <h2
+            className="text-xl font-bold"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            User Management
+          </h2>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Manage nurses, doctors, and admin accounts
+          </p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn-primary flex items-center space-x-2"
-        >
+        <button onClick={() => setShowForm(true)} className="btn-primary">
           <UserPlus size={18} />
           <span>Add User</span>
         </button>
       </div>
 
       {/* Users List */}
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading users...</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {users.map((user) => (
-            <div key={user._id} className="card hover:shadow-lg transition-all duration-200 hover-lift">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  {getRoleIcon(user.role)}
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                    <p className="text-sm text-gray-600">{user.email}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <AnimatePresence mode="wait">
+          {loading ? (
+            // Loading Skeletons
+            [...Array(6)].map((_, i) => (
+              <motion.div
+                key={`skeleton-${i}`}
+                className="card"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="skeleton w-10 h-10 rounded-lg" />
+                  <div className="flex-1">
+                    <div className="skeleton w-24 h-4 rounded mb-2" />
+                    <div className="skeleton w-32 h-3 rounded" />
                   </div>
                 </div>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => handleEdit(user)}
-                    className="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors"
-                    title="Edit user"
+                <div className="skeleton w-16 h-5 rounded-full" />
+              </motion.div>
+            ))
+          ) : users.length === 0 ? (
+            <motion.div
+              className="col-span-full card empty-state py-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <Users size={48} style={{ color: 'var(--text-tertiary)' }} className="mb-4" />
+              <h3
+                className="text-lg font-semibold mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                No users found
+              </h3>
+              <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
+                Add your first user to get started
+              </p>
+              <button onClick={() => setShowForm(true)} className="btn-primary">
+                <UserPlus size={18} />
+                Add User
+              </button>
+            </motion.div>
+          ) : (
+            users.map((user, index) => {
+              const roleStyle = getRoleBadge(user.role);
+              return (
+                <motion.div
+                  key={user._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  className="card-interactive group"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{ background: roleStyle.bg }}
+                      >
+                        {getRoleIcon(user.role)}
+                      </div>
+                      <div>
+                        <h3
+                          className="font-semibold"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          {user.name}
+                        </h3>
+                        <p
+                          className="text-sm"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEdit(user)}
+                        className="btn-icon"
+                        title="Edit user"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(user._id, user)}
+                        className="btn-icon"
+                        style={{ color: 'var(--error)' }}
+                        title="Delete user"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="badge text-xs uppercase"
+                      style={{ background: roleStyle.bg, color: roleStyle.text }}
+                    >
+                      {user.role}
+                    </span>
+                    {user.phone && (
+                      <span
+                        className="text-sm"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        {user.phone}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="mt-3 text-xs"
+                    style={{ color: 'var(--text-tertiary)' }}
                   >
-                    <Edit size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user._id, user)}
-                    className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors"
-                    title="Delete user"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadge(user.role)}`}>
-                  {user.role.toUpperCase()}
-                </span>
-                {user.phone && (
-                  <span className="text-sm text-gray-600">{user.phone}</span>
-                )}
-              </div>
-              <div className="mt-3 text-xs text-gray-500">
-                Created: {new Date(user.createdAt).toLocaleDateString()}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+                    Created: {new Date(user.createdAt).toLocaleDateString()}
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* User Form Modal */}
       <Modal 
@@ -199,7 +277,10 @@ const AdminUsersContent = () => {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Full Name*
             </label>
             <input
@@ -212,7 +293,10 @@ const AdminUsersContent = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Email*
             </label>
             <input
@@ -226,50 +310,67 @@ const AdminUsersContent = () => {
           </div>
           {editingUser ? (
             <>
-              <div className="col-span-2">
+              <div>
                 <button
                   type="button"
                   onClick={() => setShowPasswordField(!showPasswordField)}
-                  className="text-sm text-primary-600 hover:text-primary-800"
+                  className="text-sm font-medium"
+                  style={{ color: 'var(--brand-primary)' }}
                 >
-                  {showPasswordField ? '− Hide' : '+ Change Password'}
+                  {showPasswordField ? '- Hide' : '+ Change Password'}
                 </button>
               </div>
               {showPasswordField && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
                     New Password (Optional)
                   </label>
                   <input
                     type="password"
-                    minLength={6}
+                    minLength={8}
                     className="input-field"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Min 6 characters"
+                    placeholder="Min 8 characters with letter and number"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Leave blank to keep current password</p>
+                  <p
+                    className="text-xs mt-1"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    Leave blank to keep current password
+                  </p>
                 </div>
               )}
             </>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 Password*
               </label>
               <input
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
+                pattern="^(?=.*[A-Za-z])(?=.*\d).{8,}$"
+                title="Password must be at least 8 characters with at least one letter and one number"
                 className="input-field"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Min 6 characters"
+                placeholder="Min 8 characters with letter and number"
               />
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Role*
             </label>
             <select
@@ -284,7 +385,10 @@ const AdminUsersContent = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Phone (Optional)
             </label>
             <input
@@ -295,7 +399,7 @@ const AdminUsersContent = () => {
               placeholder="+1 (555) 123-4567"
             />
           </div>
-          <div className="flex space-x-4 pt-4">
+          <div className="flex gap-3 pt-4">
             <button type="submit" className="btn-primary flex-1">
               {editingUser ? 'Update User' : 'Create Account'}
             </button>
