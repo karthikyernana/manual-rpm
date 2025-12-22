@@ -85,9 +85,10 @@ export const validators = {
     if (!value) return null;
     const trimmed = value.trim();
     if (trimmed.length === 0) return 'Field name cannot be empty';
-    if (trimmed.includes(' ')) return 'Field name cannot contain spaces (use camelCase)';
-    const fieldNameRegex = /^[a-zA-Z][a-zA-Z0-9]*$/;
-    return fieldNameRegex.test(trimmed) ? null : 'Must start with a letter and contain only letters and numbers';
+    if (trimmed.includes(' ')) return 'Field name cannot contain spaces (use underscores)';
+    // Allow letters, numbers, and underscores
+    const fieldNameRegex = /^[a-zA-Z0-9_]+$/;
+    return fieldNameRegex.test(trimmed) ? null : 'Only letters, numbers, and underscores allowed';
   },
 };
 
