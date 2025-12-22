@@ -296,18 +296,10 @@ router.delete('/:id', authorize('admin', 'doctor'), async (req, res) => {
     await Alert.updateMany(
       { patient: patient._id, status: { $in: ['new', 'acknowledged'] } },
       { 
-        $set: {
-          status: 'resolved',
-          resolvedAt: new Date(),
-          resolvedBy: req.user._id
-        },
-        $push: {
-          notes: {
-            text: 'Auto-resolved: Patient record deleted',
-            addedBy: req.user._id,
-            addedAt: new Date()
-          }
-        }
+        status: 'resolved',
+        resolvedAt: new Date(),
+        resolvedBy: req.user._id,
+        notes: 'Auto-resolved: Patient record deleted'
       }
     );
 
