@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import api from '../services/api';
 
-const SharePatientModal = ({ patient, onClose }) => {
+const SharePatientModal = ({ patient, isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [shareData, setShareData] = useState(null);
+
+  // Don't render if not open
+  if (!isOpen) return null;
 
   const generateShareLink = async () => {
     try {
