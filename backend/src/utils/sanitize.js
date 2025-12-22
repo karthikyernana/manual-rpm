@@ -18,10 +18,17 @@ const sanitizeString = (str) => {
 const sanitizeObject = (obj) => {
   if (!obj || typeof obj !== 'object') return obj;
   
+  // Preserve arrays - recursively sanitize each element
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeObject(item));
+  }
+  
   const sanitized = {};
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
       sanitized[key] = sanitizeString(value);
+    } else if (Array.isArray(value)) {
+      sanitized[key] = value.map(item => sanitizeObject(item));
     } else if (typeof value === 'object' && value !== null) {
       sanitized[key] = sanitizeObject(value);
     } else {
