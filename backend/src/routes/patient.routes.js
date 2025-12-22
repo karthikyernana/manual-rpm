@@ -1,7 +1,11 @@
 const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Patient = require('../models/Patient');
-const { protect } = require('../middleware/auth');
+const Alert = require('../models/Alert');
+const Reminder = require('../models/Reminder');
+const SharedLink = require('../models/SharedLink');
+const Vitals = require('../models/Vitals');
+const { protect, authorize } = require('../middleware/auth');
 const { logAudit, ACTIONS } = require('../utils/auditLogger');
 
 const router = express.Router();
@@ -32,7 +36,8 @@ router.post(
     body('dob').isISO8601().withMessage('Valid date of birth is required'),
     body('gender').isIn(['male', 'female', 'other']).withMessage('Valid gender is required'),
     body('ward').notEmpty().withMessage('Ward is required'),
-    body('template').optional().isIn(['general', 'cardiac', 'diabetic'])
+    body('template').optional().isIn(['general', 'cardiac', 'diabetic', 'custom']),
+    body('customTemplateId').optional().isMongoId()
   ],
   validate,
   async (req, res) => {
@@ -207,7 +212,8 @@ router.put(
     body('dob').optional().isISO8601(),
     body('gender').optional().isIn(['male', 'female', 'other']),
     body('ward').optional().notEmpty(),
-    body('template').optional().isIn(['general', 'cardiac', 'diabetic'])
+    body('template').optional().isIn(['general', 'cardiac', 'diabetic', 'custom']),
+    body('customTemplateId').optional().isMongoId()
   ],
   validate,
   async (req, res) => {
@@ -269,9 +275,9 @@ router.put(
 );
 
 // @route   DELETE /api/v1/patients/:id
-// @desc    Soft delete patient
-// @access  Private
-router.delete('/:id', async (req, res) => {
+// @desc    Soft delete patient with cascade cleanup
+// @access  Private (Admin/Doctor only)
+router.delete('/:id', authorize('admin', 'doctor'), async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id);
 
@@ -282,9 +288,44 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    // Soft delete
+    // Soft delete patient
     patient.active = false;
     await patient.save();
+
+    // Cascade: Resolve all pending/new alerts for this patient
+    await Alert.updateMany(
+      { patient: patient._id, status: { $in: ['new', 'acknowledged'] } },
+      { 
+        $set: {
+          status: 'resolved',
+          resolvedAt: new Date(),
+          resolvedBy: req.user._id
+        },
+        $push: {
+          notes: {
+            text: 'Auto-resolved: Patient record deleted',
+            addedBy: req.user._id,
+            addedAt: new Date()
+          }
+        }
+      }
+    );
+
+    // Cascade: Cancel all pending/snoozed reminders for this patient
+    await Reminder.updateMany(
+      { patient: patient._id, status: { $in: ['pending', 'snoozed'] } },
+      { status: 'cancelled' }
+    );
+
+    // Cascade: Revoke all active share links for this patient
+    await SharedLink.updateMany(
+      { patient: patient._id, revoked: false },
+      { revoked: true }
+    );
+
+    // Cascade: Delete all vitals records for this patient
+    const deletedVitals = await Vitals.deleteMany({ patient: patient._id });
+    console.log(`Deleted ${deletedVitals.deletedCount} vitals records for patient ${patient.mrn}`);
 
     // Log the deletion
     await logAudit({
@@ -293,7 +334,7 @@ router.delete('/:id', async (req, res) => {
       resourceType: 'patient',
       resourceId: patient._id,
       resourceName: patient.name,
-      details: `Deleted patient ${patient.name} (MRN: ${patient.mrn})`,
+      details: `Deleted patient ${patient.name} (MRN: ${patient.mrn}) with cascade cleanup`,
       req
     });
 

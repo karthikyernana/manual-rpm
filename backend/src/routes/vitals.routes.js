@@ -90,13 +90,13 @@ router.post(
   '/',
   [
     body('patient').isMongoId().withMessage('Valid patient ID is required'),
-    body('template').isIn(['general', 'cardiac', 'diabetic']).withMessage('Valid template is required'),
+    body('template').notEmpty().withMessage('Template is required'),
     body('vitals').isObject().withMessage('Vitals data is required')
   ],
   validate,
   async (req, res) => {
     try {
-      const { patient, template, vitals, notes } = req.body;
+      const { patient, template, vitals, notes, customTemplateId } = req.body;
 
       // Verify patient exists
       const patientDoc = await Patient.findById(patient);
@@ -107,10 +107,30 @@ router.post(
         });
       }
 
+      // Validate template - accept built-in or custom
+      const builtInTemplates = ['general', 'cardiac', 'diabetic'];
+      let templateName = template;
+      let customTemplate = null;
+
+      if (!builtInTemplates.includes(template)) {
+        // Check if it's a custom template ID
+        const VitalsTemplate = require('../models/VitalsTemplate');
+        customTemplate = await VitalsTemplate.findById(template);
+        
+        if (!customTemplate) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid template. Must be general, cardiac, diabetic, or a valid custom template ID'
+          });
+        }
+        templateName = 'custom';
+      }
+
       // Create vitals record
       const vitalsRecord = await Vitals.create({
         patient,
-        template,
+        template: templateName,
+        customTemplateId: customTemplate?._id || customTemplateId,
         vitals,
         notes,
         recordedBy: req.user._id

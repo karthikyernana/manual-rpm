@@ -45,8 +45,12 @@ const patientSchema = new mongoose.Schema({
   },
   template: {
     type: String,
-    enum: ['general', 'cardiac', 'diabetic'],
+    enum: ['general', 'cardiac', 'diabetic', 'custom'],
     default: 'general'
+  },
+  customTemplateId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'VitalsTemplate'
   },
   phone: {
     type: String,

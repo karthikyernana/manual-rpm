@@ -50,8 +50,13 @@ const vitalsSchema = new mongoose.Schema({
   },
   template: {
     type: String,
-    enum: ['general', 'cardiac', 'diabetic'],
+    enum: ['general', 'cardiac', 'diabetic', 'custom'],
     required: true
+  },
+  customTemplateId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'VitalsTemplate',
+    required: function() { return this.template === 'custom'; }
   },
   recordedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -94,13 +99,28 @@ vitalsSchema.index({ flagged: 1, recordedAt: -1 });
 
 // Pre-save hook to check for flagged values
 vitalsSchema.pre('save', async function() {
-  const template = VITAL_TEMPLATES[this.template];
-  if (!template) return;
+  let templateFields = null;
+  
+  // Get template fields - either from built-in or custom
+  if (this.template === 'custom' && this.customTemplateId) {
+    const VitalsTemplate = mongoose.model('VitalsTemplate');
+    const customTemplate = await VitalsTemplate.findById(this.customTemplateId);
+    if (customTemplate) {
+      templateFields = customTemplate.fields;
+    }
+  } else {
+    const template = VITAL_TEMPLATES[this.template];
+    if (template) {
+      templateFields = template.fields;
+    }
+  }
+  
+  if (!templateFields) return;
 
   this.flagged = false;
   this.flaggedFields = [];
 
-  template.fields.forEach(field => {
+  templateFields.forEach(field => {
     const value = this.vitals[field.name];
     
     // Skip if no value or no normal range defined
@@ -110,13 +130,17 @@ vitalsSchema.pre('save', async function() {
     if (field.unit === 'boolean') return;
 
     // Check if value is outside normal range
-    if (value < field.normal.min || value > field.normal.max) {
-      this.flagged = true;
-      this.flaggedFields.push({
-        field: field.name,
-        value: value,
-        normalRange: field.normal
-      });
+    const normalMin = field.normal.min;
+    const normalMax = field.normal.max;
+    if (normalMin !== undefined && normalMax !== undefined) {
+      if (value < normalMin || value > normalMax) {
+        this.flagged = true;
+        this.flaggedFields.push({
+          field: field.name,
+          value: value,
+          normalRange: field.normal
+        });
+      }
     }
   });
 });
