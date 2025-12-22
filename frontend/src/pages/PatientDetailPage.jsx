@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Edit2, Share2, FileText, Table, Activity, Trash2, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Edit2, Share2, FileText, Table, Activity, Trash2, Calendar, User, LogOut, RefreshCw, Clock, History } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
 import Modal from '../components/Modal';
@@ -8,6 +8,8 @@ import SharePatientModal from '../components/SharePatientModal';
 import { generatePDF, downloadCSV } from '../utils/export';
 import toast from '../utils/toast';
 import api from '../services/api';
+
+const WARDS = ['ICU-1', 'ICU-2', 'General-1', 'Cardiac', 'Pediatric'];
 
 const PatientDetailPage = () => {
   const { id } = useParams();
@@ -17,6 +19,8 @@ const PatientDetailPage = () => {
   const [template, setTemplate] = useState(null);
   const [showVitalsForm, setShowVitalsForm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showReadmitModal, setShowReadmitModal] = useState(false);
+  const [readmitData, setReadmitData] = useState({ ward: '', bed: '', notes: '' });
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [trendData, setTrendData] = useState([]);
@@ -35,15 +39,23 @@ const PatientDetailPage = () => {
         setPatient(patientData);
         
         // Fetch template for this patient
-        const templateResponse = await api.get(`/vitals/templates/${patientData.template}`);
-        if (templateResponse.data.success) {
-          setTemplate(templateResponse.data.data.template);
-          // Initialize form data
-          const initialData = {};
-          templateResponse.data.data.template.fields.forEach(field => {
-            initialData[field.name] = '';
-          });
-          setFormData(initialData);
+        try {
+          let templateId = patientData.template;
+          if (patientData.template === 'custom' && patientData.customTemplateId) {
+             templateId = patientData.customTemplateId._id || patientData.customTemplateId;
+          }
+          const templateResponse = await api.get(`/vitals/templates/${templateId}`);
+          if (templateResponse.data.success) {
+            setTemplate(templateResponse.data.data.template);
+            // Initialize form data
+            const initialData = {};
+            templateResponse.data.data.template.fields.forEach(field => {
+              initialData[field.name] = '';
+            });
+            setFormData(initialData);
+          }
+        } catch (templateError) {
+          console.error('Error fetching template:', templateError);
         }
       }
     } catch (error) {
@@ -91,6 +103,11 @@ const PatientDetailPage = () => {
     e.preventDefault();
     
     try {
+      if (!template || !template.fields) {
+        toast.error('Template definition invalid or missing');
+        return;
+      }
+
       // Convert string values to numbers for non-boolean fields
       const processedVitals = {};
       template.fields.forEach(field => {
@@ -110,7 +127,7 @@ const PatientDetailPage = () => {
 
       const response = await api.post('/vitals', {
         patient: id,
-        template: patient.template,
+        template: patient.template === 'custom' ? (patient.customTemplateId?._id || patient.customTemplateId) : patient.template,
         vitals: processedVitals
       });
 
@@ -169,6 +186,53 @@ const PatientDetailPage = () => {
       console.error('Error deleting vital:', error);
       const errorMsg = error.response?.data?.message || 'Failed to delete vital record';
       toast.error(`${errorMsg}`);
+    }
+  };
+
+  const handleDischarge = async () => {
+    const notes = prompt('Enter discharge notes (optional):');
+    if (notes === null) return; // User cancelled
+    
+    try {
+      const response = await api.post(`/patients/${id}/discharge`, { notes });
+      if (response.data.success) {
+        toast.success('Patient discharged successfully');
+        fetchPatient(); // Refresh patient data
+      }
+    } catch (error) {
+      console.error('Error discharging patient:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to discharge patient';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleReadmit = () => {
+    setReadmitData({ ward: patient.ward || '', bed: '', notes: '' });
+    setShowReadmitModal(true);
+  };
+
+  const handleReadmitSubmit = async (e) => {
+    e.preventDefault();
+    if (!readmitData.ward) {
+      toast.error('Please select a ward');
+      return;
+    }
+    
+    try {
+      const response = await api.post(`/patients/${id}/readmit`, {
+        ward: readmitData.ward,
+        bed: readmitData.bed,
+        notes: readmitData.notes
+      });
+      if (response.data.success) {
+        toast.success('Patient readmitted successfully');
+        setShowReadmitModal(false);
+        fetchPatient(); // Refresh patient data
+      }
+    } catch (error) {
+      console.error('Error readmitting patient:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to readmit patient';
+      toast.error(errorMsg);
     }
   };
 
@@ -236,12 +300,24 @@ const PatientDetailPage = () => {
         <div className="card mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4">
             <div>
-              <h1
-                className="text-2xl font-bold"
-                style={{ color: 'var(--brand-primary)' }}
-              >
-                {patient.name}
-              </h1>
+              <div className="flex items-center gap-3 mb-1">
+                <h1
+                  className="text-2xl font-bold"
+                  style={{ color: 'var(--brand-primary)' }}
+                >
+                  {patient.name}
+                </h1>
+                {/* Status Badge */}
+                <span
+                  className="badge text-xs font-medium px-2 py-1 rounded-full"
+                  style={{
+                    background: patient.status === 'discharged' ? 'var(--warning-muted)' : 'var(--success-muted)',
+                    color: patient.status === 'discharged' ? 'var(--warning)' : 'var(--success)'
+                  }}
+                >
+                  {patient.status === 'discharged' ? 'Discharged' : 'Admitted'}
+                </span>
+              </div>
               <p
                 className="text-sm mt-1"
                 style={{ color: 'var(--text-secondary)' }}
@@ -253,6 +329,7 @@ const PatientDetailPage = () => {
                 style={{ color: 'var(--text-secondary)' }}
               >
                 Ward: {patient.ward} {patient.bed && `- Bed ${patient.bed}`}
+                {patient.dischargedAt && ` • Discharged: ${new Date(patient.dischargedAt).toLocaleDateString()}`}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -272,10 +349,30 @@ const PatientDetailPage = () => {
                 <Table size={16} />
                 CSV
               </button>
-              <button onClick={() => setShowVitalsForm(true)} className="btn-primary">
-                <Activity size={16} />
-                Record Vitals
-              </button>
+              {patient.status !== 'discharged' ? (
+                <>
+                  <button onClick={() => setShowVitalsForm(true)} className="btn-primary">
+                    <Activity size={16} />
+                    Record Vitals
+                  </button>
+                  <button 
+                    onClick={handleDischarge} 
+                    className="btn-secondary"
+                    style={{ color: 'var(--warning)' }}
+                  >
+                    <LogOut size={16} />
+                    Discharge
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={handleReadmit} 
+                  className="btn-primary"
+                >
+                  <RefreshCw size={16} />
+                  Readmit Patient
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -289,7 +386,7 @@ const PatientDetailPage = () => {
             >
               7-Day Vitals Trend
             </h2>
-            <div style={{ height: '300px' }}>
+            <div style={{ height: '300px', minHeight: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
@@ -396,6 +493,22 @@ const PatientDetailPage = () => {
                     {Object.entries(vital.vitals).map(([key, value]) => {
                       const isFlagged = vital.flaggedFields?.some(f => f.field === key);
                       const field = template?.fields?.find(f => f.name === key);
+                      
+                      // Format value for display - handle objects like bloodPressure
+                      const formatValue = (val) => {
+                        if (val === null || val === undefined) return 'N/A';
+                        if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+                        if (typeof val === 'object') {
+                          // Handle bloodPressure object
+                          if (val.systolic !== undefined && val.diastolic !== undefined) {
+                            return `${val.systolic}/${val.diastolic}`;
+                          }
+                          // Handle other objects - display as JSON
+                          return JSON.stringify(val);
+                        }
+                        return val;
+                      };
+                      
                       return (
                         <div
                           key={key}
@@ -415,8 +528,8 @@ const PatientDetailPage = () => {
                             className="font-semibold text-sm"
                             style={{ color: isFlagged ? 'var(--error)' : 'var(--text-primary)' }}
                           >
-                            {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
-                            {field?.unit && field.unit !== 'boolean' && (
+                            {formatValue(value)}
+                            {field?.unit && field.unit !== 'boolean' && typeof value !== 'object' && (
                               <span className="font-normal text-xs ml-1" style={{ color: 'var(--text-tertiary)' }}>
                                 {field.unit}
                               </span>
@@ -431,6 +544,66 @@ const PatientDetailPage = () => {
             </div>
           )}
         </div>
+
+        {/* Admission History */}
+        {patient.admissionHistory && patient.admissionHistory.length > 0 && (
+          <div className="card mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2
+                className="section-title flex items-center gap-2 mb-0"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                <History size={20} />
+                Admission History
+              </h2>
+              <button
+                onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/export/patient/${id}/history/csv`, '_blank')}
+                className="btn-secondary text-sm"
+              >
+                <Table size={14} />
+                Export CSV
+              </button>
+            </div>
+            <div className="space-y-3">
+              {patient.admissionHistory.map((admission, index) => {
+                const admittedDate = new Date(admission.admittedAt);
+                const dischargedDate = new Date(admission.dischargedAt);
+                const lengthOfStay = Math.ceil((dischargedDate - admittedDate) / (1000 * 60 * 60 * 24));
+                
+                return (
+                  <div
+                    key={index}
+                    className="p-4 rounded-lg"
+                    style={{
+                      background: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-subtle)'
+                    }}
+                  >
+                    <div className="flex flex-wrap items-center gap-4 mb-2">
+                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        <Calendar size={14} />
+                        <span>Admitted: {admittedDate.toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        <LogOut size={14} />
+                        <span>Discharged: {dischargedDate.toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                        <Clock size={14} />
+                        <span>{lengthOfStay} day{lengthOfStay !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                    {admission.dischargeNotes && (
+                      <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="font-medium">Notes:</span> {admission.dischargeNotes}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Vitals Entry Modal */}
@@ -501,11 +674,79 @@ const PatientDetailPage = () => {
       )}
 
       {/* Share Modal */}
-      {showShareModal && (
+      {patient && (
         <SharePatientModal
           patient={patient}
+          isOpen={showShareModal}
           onClose={() => setShowShareModal(false)}
         />
+      )}
+
+      {/* Readmit Modal */}
+      {showReadmitModal && (
+        <Modal
+          isOpen={showReadmitModal}
+          onClose={() => setShowReadmitModal(false)}
+          title="Readmit Patient"
+        >
+          <form onSubmit={handleReadmitSubmit}>
+            <div className="space-y-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                  Ward <span style={{ color: 'var(--error)' }}>*</span>
+                </label>
+                <select
+                  className="input-field"
+                  value={readmitData.ward}
+                  onChange={(e) => setReadmitData({ ...readmitData, ward: e.target.value })}
+                  required
+                >
+                  <option value="">Select Ward</option>
+                  {WARDS.map(w => (
+                    <option key={w} value={w}>{w}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                  Bed (Optional)
+                </label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={readmitData.bed}
+                  onChange={(e) => setReadmitData({ ...readmitData, bed: e.target.value })}
+                  placeholder="e.g., 12A"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                  Readmission Notes (Optional)
+                </label>
+                <textarea
+                  className="input-field"
+                  rows={3}
+                  value={readmitData.notes}
+                  onChange={(e) => setReadmitData({ ...readmitData, notes: e.target.value })}
+                  placeholder="Reason for readmission..."
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary flex-1">
+                <RefreshCw size={16} />
+                Readmit Patient
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReadmitModal(false)}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );
