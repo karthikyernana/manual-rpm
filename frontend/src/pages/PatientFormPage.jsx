@@ -68,7 +68,11 @@ const PatientFormPage = () => {
     try {
       const response = await api.get('/settings/wards');
       if (response.data.success) {
-        setWards(response.data.data.wards.filter(w => w.isActive));
+        // Handle wards as direct array or nested in wards property
+        const wardsData = Array.isArray(response.data.data) 
+          ? response.data.data 
+          : response.data.data.wards || [];
+        setWards(wardsData.filter(w => w.isActive !== false));
       }
     } catch (error) {
       console.error('Error fetching wards:', error);
