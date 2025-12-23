@@ -44,15 +44,22 @@ const checkVitalsDue = cron.schedule('0 8 * * *', async () => {
           
           console.log(`Created vitals reminder for patient: ${patient.name}`);
           
-          // Send email to primary nurse if available
+          // Send email to primary nurse if available and not in quiet hours
           if (patient.primaryNurse) {
             const nurse = await User.findById(patient.primaryNurse);
             if (nurse && nurse.email) {
-              await sendReminderEmail({
-                to: nurse.email,
-                patient: patient,
-                reminder: reminder
-              });
+              // Check if current time is within quiet hours
+              const isQuietHours = checkQuietHours(nurse);
+              
+              if (!isQuietHours) {
+                await sendReminderEmail({
+                  to: nurse.email,
+                  patient: patient,
+                  reminder: reminder
+                });
+              } else {
+                console.log(`Skipping email for ${nurse.name} - quiet hours (${nurse.notificationPrefs.quietHoursStart} - ${nurse.notificationPrefs.quietHoursEnd})`);
+              }
             }
           }
         }
@@ -103,6 +110,27 @@ const stopSchedulers = () => {
   cleanupReminders.stop();
   console.log('Schedulers stopped');
 };
+
+// Helper function to check if current time is within user's quiet hours
+function checkQuietHours(user) {
+  if (!user.notificationPrefs || !user.notificationPrefs.quietHoursStart || !user.notificationPrefs.quietHoursEnd) {
+    return false; // No quiet hours configured
+  }
+
+  const now = new Date();
+  const currentTime = now.toTimeString().slice(0, 5); // "HH:MM" format
+  
+  const start = user.notificationPrefs.quietHoursStart; // e.g., "22:00"
+  const end = user.notificationPrefs.quietHoursEnd;     // e.g., "07:00"
+  
+  // Handle overnight quiet hours (e.g., 22:00 to 07:00)
+  if (start > end) {
+    return currentTime >= start || currentTime <= end;
+  }
+  
+  // Handle same-day quiet hours (e.g., 13:00 to 15:00)
+  return currentTime >= start && currentTime <= end;
+}
 
 module.exports = {
   startSchedulers,

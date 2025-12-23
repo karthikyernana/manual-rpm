@@ -219,7 +219,7 @@ const RemindersPage = () => {
                       </div>
                     </div>
                   </motion.div>
-                ))}\n              </motion.div>
+                ))}              </motion.div>
             ) : reminders.length === 0 ? (
               <motion.div
                 key="empty"
@@ -369,7 +369,7 @@ const RemindersPage = () => {
                     </div>
                   </motion.div>
                 );
-              })}\n              </motion.div>
+              })}              </motion.div>
             )}
           </AnimatePresence>
         </div>

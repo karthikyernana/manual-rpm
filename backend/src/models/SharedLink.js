@@ -40,5 +40,7 @@ const sharedLinkSchema = new mongoose.Schema({
 
 // Index for cleanup of expired links
 sharedLinkSchema.index({ expiresAt: 1, revoked: 1 });
+// Additional index for fast token lookups (token already has unique:true)
+sharedLinkSchema.index({ patient: 1, revoked: 1 });
 
 module.exports = mongoose.model('SharedLink', sharedLinkSchema);

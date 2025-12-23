@@ -267,7 +267,7 @@ const DashboardPage = () => {
                     </Link>
                   </motion.div>
                 );
-              })}\n              </motion.div>
+              })}              </motion.div>
             )}
           </AnimatePresence>
         </div>

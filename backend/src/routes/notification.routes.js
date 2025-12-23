@@ -2,7 +2,7 @@ const express = require('express');
 const Reminder = require('../models/Reminder');
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
-const { sendReminderEmail } = require('../services/emailNotifications');
+const { sendReminderEmail } = require('../services/emailService');
 
 const router = express.Router();
 

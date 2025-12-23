@@ -83,10 +83,43 @@ const isValidEmail = (email) => {
   return validator.isEmail(email);
 };
 
+/**
+ * Normalize dates to UTC
+ * Converts date strings to ISO format for consistent timezone handling
+ */
+const normalizeDates = (req, res, next) => {
+  const normalizeDateFields = (obj) => {
+    if (!obj || typeof obj !== 'object') return;
+    
+    const dateFields = ['dob', 'admissionDate', 'dueDate', 'scheduledTime', 'recordedAt', 'expiresAt'];
+    
+    for (const field of dateFields) {
+      if (obj[field] && typeof obj[field] === 'string') {
+        try {
+          obj[field] = new Date(obj[field]).toISOString();
+        } catch (e) {
+          // Keep original if conversion fails
+        }
+      }
+    }
+    
+    // Recursively check nested objects
+    for (const key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+        normalizeDateFields(obj[key]);
+      }
+    }
+  };
+  
+  if (req.body) normalizeDateFields(req.body);
+  next();
+};
+
 module.exports = {
   sanitizeString,
   sanitizeObject,
   sanitizeBody,
   isValidObjectId,
-  isValidEmail
+  isValidEmail,
+  normalizeDates
 };

@@ -65,6 +65,14 @@ alertSchema.index({ status: 1, severity: 1, createdAt: -1 });
 alertSchema.statics.calculateSeverity = function(flaggedFields) {
   if (!flaggedFields || flaggedFields.length === 0) return 'low';
   
+  // Critical boolean indicators (chest pain, breathing difficulty, etc.)
+  const criticalBooleanFields = ['chestPain', 'breathingDifficulty', 'unconscious', 'severeChestPain'];
+  const hasCriticalBoolean = flaggedFields.some(field => 
+    criticalBooleanFields.includes(field.field) && field.value === true
+  );
+  
+  if (hasCriticalBoolean) return 'critical';
+  
   let maxDeviation = 0;
   
   flaggedFields.forEach(field => {

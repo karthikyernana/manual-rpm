@@ -84,4 +84,17 @@ patientSchema.index({ ward: 1, active: 1 });
 patientSchema.index({ primaryNurse: 1 });
 patientSchema.index({ name: 'text' }); // Text search on name
 
+// Prevent duplicate bed assignments (only for active patients with assigned beds)
+patientSchema.index(
+  { ward: 1, bed: 1 }, 
+  { 
+    unique: true,
+    partialFilterExpression: { 
+      active: true, 
+      bed: { $exists: true, $ne: '', $ne: null } 
+    },
+    name: 'unique_ward_bed_for_active_patients'
+  }
+);
+
 module.exports = mongoose.model('Patient', patientSchema);

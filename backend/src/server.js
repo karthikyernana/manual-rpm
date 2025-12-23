@@ -6,15 +6,27 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 
+// Validate critical environment variables
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  console.error('❌ FATAL: JWT_SECRET must be at least 32 characters');
+  console.error('   Set JWT_SECRET in .env file for security');
+  process.exit(1);
+}
+
+if (!process.env.MONGODB_URI) {
+  console.error('❌ FATAL: MONGODB_URI is required');
+  process.exit(1);
+}
+
 const app = express();
 
 // Connect to MongoDB
 connectDB();
 
-// Rate limiting - General API (500 requests per 15 min - generous for app usage)
+// Rate limiting - General API (200 requests per 15 min - balanced protection)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500,
+  max: 200,
   message: {
     success: false,
     message: 'Too many requests, please try again later.'
@@ -45,9 +57,10 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10kb' })); // Limit body size to prevent large payload attacks
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Input sanitization middleware
-const { sanitizeBody } = require('./utils/sanitize');
+// Input sanitization and timezone normalization middleware
+const { sanitizeBody, normalizeDates } = require('./utils/sanitize');
 app.use(sanitizeBody);
+app.use(normalizeDates);
 
 // Apply general rate limiting to all API routes
 app.use('/api/', generalLimiter);
@@ -72,6 +85,7 @@ const shareRoutes = require('./routes/share.routes');
 const exportRoutes = require('./routes/export.routes');
 const auditRoutes = require('./routes/audit.routes');
 const settingsRoutes = require('./routes/settings.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
 
 app.use('/api/v1/auth', authLimiter, authRoutes);
 app.use('/api/v1/patients', patientRoutes);
@@ -83,6 +97,15 @@ app.use('/api/v1/share', shareRoutes);
 app.use('/api/v1/export', exportRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/settings', settingsRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+
+// Initialize Settings
+const Settings = require('./models/Settings');
+Settings.getSettings().then(() => {
+  console.log('✅ System settings initialized');
+}).catch(err => {
+  console.error('⚠️  Settings initialization warning:', err.message);
+});
 
 // Start schedulers
 const { startSchedulers } = require('./services/scheduler');
