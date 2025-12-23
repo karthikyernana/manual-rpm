@@ -191,27 +191,29 @@ const AlertsPage = () => {
         <div className="space-y-3">
           <AnimatePresence mode="wait">
             {loading ? (
-              // Loading Skeletons
-              [...Array(4)].map((_, i) => (
-                <motion.div
-                  key={`skeleton-${i}`}
-                  className="card"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="skeleton w-10 h-10 rounded-lg" />
-                    <div className="flex-1">
-                      <div className="skeleton w-32 h-5 rounded mb-2" />
-                      <div className="skeleton w-48 h-4 rounded mb-2" />
-                      <div className="skeleton w-full h-4 rounded" />
+              <motion.div key="loading" className="contents">
+                {[...Array(4)].map((_, i) => (
+                  <motion.div
+                    key={`skeleton-${i}`}
+                    className="card"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="skeleton w-10 h-10 rounded-lg" />
+                      <div className="flex-1">
+                        <div className="skeleton w-32 h-5 rounded mb-2" />
+                        <div className="skeleton w-48 h-4 rounded mb-2" />
+                        <div className="skeleton w-full h-4 rounded" />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                ))}
+              </motion.div>
             ) : alerts.length === 0 ? (
               <motion.div
+                key="empty"
                 className="card empty-state py-16"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

@@ -2,6 +2,8 @@ const cron = require('node-cron');
 const Reminder = require('../models/Reminder');
 const Patient = require('../models/Patient');
 const Vitals = require('../models/Vitals');
+const User = require('../models/User');
+const { sendReminderEmail } = require('./emailService');
 
 // Check for patients who need vitals recorded every day at 8 AM
 const checkVitalsDue = cron.schedule('0 8 * * *', async () => {
@@ -30,7 +32,7 @@ const checkVitalsDue = cron.schedule('0 8 * * *', async () => {
         
         if (!existingReminder) {
           // Create reminder
-          await Reminder.create({
+          const reminder = await Reminder.create({
             patient: patient._id,
             type: 'vitals_due',
             title: 'Vitals Recording Due',
@@ -41,6 +43,18 @@ const checkVitalsDue = cron.schedule('0 8 * * *', async () => {
           });
           
           console.log(`Created vitals reminder for patient: ${patient.name}`);
+          
+          // Send email to primary nurse if available
+          if (patient.primaryNurse) {
+            const nurse = await User.findById(patient.primaryNurse);
+            if (nurse && nurse.email) {
+              await sendReminderEmail({
+                to: nurse.email,
+                patient: patient,
+                reminder: reminder
+              });
+            }
+          }
         }
       }
     }

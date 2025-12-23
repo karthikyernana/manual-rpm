@@ -6,13 +6,6 @@ import Navbar from '../components/Navbar';
 import api from '../services/api';
 import toast from '../utils/toast';
 
-// Built-in templates that are always available
-const BUILTIN_TEMPLATES = [
-  { value: 'general', label: 'General' },
-  { value: 'cardiac', label: 'Cardiac' },
-  { value: 'diabetic', label: 'Diabetic' }
-];
-
 const PatientFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,7 +21,6 @@ const PatientFormPage = () => {
     consent: false,
     phone: '',
     template: 'general',
-    customTemplateId: '',
     emergencyContact: {
       name: '',
       phone: '',
@@ -38,13 +30,12 @@ const PatientFormPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [customTemplates, setCustomTemplates] = useState([]);
+  const [templates, setTemplates] = useState([]);
   const [wards, setWards] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  // Fetch custom templates and wards on mount
   useEffect(() => {
-    fetchCustomTemplates();
-    fetchWards();
+    fetchInitialData();
   }, []);
 
   useEffect(() => {
@@ -53,37 +44,25 @@ const PatientFormPage = () => {
     }
   }, [id]);
 
-  const fetchCustomTemplates = async () => {
+  const fetchInitialData = async () => {
     try {
-      const response = await api.get('/templates');
-      if (response.data.success) {
-        setCustomTemplates(response.data.data.templates);
-      }
-    } catch (error) {
-      console.error('Error fetching templates:', error);
-    }
-  };
-
-  const fetchWards = async () => {
-    try {
-      const response = await api.get('/settings/wards');
-      if (response.data.success) {
-        // Handle wards as direct array or nested in wards property
-        const wardsData = Array.isArray(response.data.data) 
-          ? response.data.data 
-          : response.data.data.wards || [];
-        setWards(wardsData.filter(w => w.isActive !== false));
-      }
-    } catch (error) {
-      console.error('Error fetching wards:', error);
-      // Fallback to default wards if API fails
-      setWards([
-        { name: 'ICU-1' },
-        { name: 'ICU-2' },
-        { name: 'General-1' },
-        { name: 'Cardiac' },
-        { name: 'Pediatric' }
+      const [templatesRes, wardsRes] = await Promise.all([
+        api.get('/templates'),
+        api.get('/settings/wards')
       ]);
+      
+      if (templatesRes.data.success) {
+        setTemplates(templatesRes.data.data.templates);
+      }
+      
+      if (wardsRes.data.success) {
+        setWards(wardsRes.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching initial data:', error);
+      toast.error('Failed to load form data');
+    } finally {
+      setLoadingData(false);
     }
   };
 
@@ -92,6 +71,11 @@ const PatientFormPage = () => {
       const response = await api.get(`/patients/${id}`);
       if (response.data.success) {
         const patient = response.data.data.patient;
+        // Determine the template value to display
+        const templateValue = patient.template === 'custom' && patient.customTemplateId 
+          ? patient.customTemplateId 
+          : patient.template;
+        
         setFormData({
           mrn: patient.mrn,
           name: patient.name,
@@ -101,7 +85,7 @@ const PatientFormPage = () => {
           bed: patient.bed || '',
           consent: patient.consent,
           phone: patient.phone || '',
-          template: patient.template,
+          template: templateValue,
           emergencyContact: patient.emergencyContact || {
             name: '',
             phone: '',
@@ -310,10 +294,11 @@ const PatientFormPage = () => {
                     className="input-field"
                     value={formData.ward}
                     onChange={handleChange}
+                    disabled={loadingData}
                   >
                     <option value="">Select Ward</option>
                     {wards.map((ward) => (
-                      <option key={ward.name || ward._id} value={ward.name}>
+                      <option key={ward.name} value={ward.name}>
                         {ward.name}
                       </option>
                     ))}
@@ -366,37 +351,20 @@ const PatientFormPage = () => {
                     required
                     className="input-field"
                     value={formData.template}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Check if it's a custom template (starts with 'custom:')
-                      if (value.startsWith('custom:')) {
-                        setFormData({
-                          ...formData,
-                          template: 'custom',
-                          customTemplateId: value.replace('custom:', '')
-                        });
-                      } else {
-                        setFormData({
-                          ...formData,
-                          template: value,
-                          customTemplateId: ''
-                        });
-                      }
-                      setError('');
-                    }}
+                    onChange={handleChange}
+                    disabled={loadingData}
                   >
+                    <option value="">Select Template</option>
                     <optgroup label="Built-in Templates">
-                      {BUILTIN_TEMPLATES.map((t) => (
-                        <option key={t.value} value={t.value}>
-                          {t.label}
-                        </option>
-                      ))}
+                      <option value="general">General</option>
+                      <option value="cardiac">Cardiac</option>
+                      <option value="diabetic">Diabetic</option>
                     </optgroup>
-                    {customTemplates.length > 0 && (
+                    {templates.length > 0 && (
                       <optgroup label="Custom Templates">
-                        {customTemplates.map((t) => (
-                          <option key={t._id} value={`custom:${t._id}`}>
-                            {t.name}
+                        {templates.map((template) => (
+                          <option key={template._id} value={template._id}>
+                            {template.name} ({template.fields.length} fields)
                           </option>
                         ))}
                       </optgroup>

@@ -36,13 +36,20 @@ router.post(
     body('dob').isISO8601().withMessage('Valid date of birth is required'),
     body('gender').isIn(['male', 'female', 'other']).withMessage('Valid gender is required'),
     body('ward').notEmpty().withMessage('Ward is required'),
-    body('template').optional().isIn(['general', 'cardiac', 'diabetic', 'custom']),
-    body('customTemplateId').optional().isMongoId()
+    body('template').optional().custom((value) => {
+      // Allow built-in templates or MongoDB ObjectId for custom templates
+      const builtIn = ['general', 'cardiac', 'diabetic', 'custom'];
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
+      if (builtIn.includes(value) || isObjectId) {
+        return true;
+      }
+      throw new Error('Template must be general, cardiac, diabetic, or a valid custom template ID');
+    })
   ],
   validate,
   async (req, res) => {
     try {
-      const { mrn, name, dob, gender, ward, bed, consent, phone, emergencyContact, template, notes } = req.body;
+      const { mrn, name, dob, gender, ward, bed, consent, phone, emergencyContact, template, notes, customTemplateId } = req.body;
 
       // Check if MRN already exists
       const existingPatient = await Patient.findOne({ mrn: mrn.toUpperCase() });
@@ -51,6 +58,22 @@ router.post(
           success: false,
           message: 'Patient with this MRN already exists'
         });
+      }
+
+      // Determine if template is custom
+      const builtInTemplates = ['general', 'cardiac', 'diabetic'];
+      let templateValue = template || 'general';
+      let customTempId = null;
+
+      // If template is not a built-in one, treat it as a custom template ID
+      if (!builtInTemplates.includes(template)) {
+        const VitalsTemplate = require('../models/VitalsTemplate');
+        const customTemplate = await VitalsTemplate.findById(template);
+        
+        if (customTemplate) {
+          templateValue = 'custom';
+          customTempId = template;
+        }
       }
 
       // Create patient with current user as primary nurse
@@ -65,7 +88,8 @@ router.post(
         primaryNurse: req.user._id,
         phone,
         emergencyContact,
-        template: template || 'general',
+        template: templateValue,
+        customTemplateId: customTempId,
         notes
       });
 
@@ -142,6 +166,7 @@ router.get(
       const patients = await Patient.find(filter)
         .populate('primaryNurse', 'name email role')
         .populate('primaryDoctor', 'name email role')
+        .populate('customTemplateId', 'name category')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit);
@@ -178,7 +203,8 @@ router.get('/:id', async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id)
       .populate('primaryNurse', 'name email role phone')
-      .populate('primaryDoctor', 'name email role phone');
+      .populate('primaryDoctor', 'name email role phone')
+      .populate('customTemplateId', 'name description fields category');
 
     if (!patient) {
       return res.status(404).json({
@@ -212,8 +238,15 @@ router.put(
     body('dob').optional().isISO8601(),
     body('gender').optional().isIn(['male', 'female', 'other']),
     body('ward').optional().notEmpty(),
-    body('template').optional().isIn(['general', 'cardiac', 'diabetic', 'custom']),
-    body('customTemplateId').optional().isMongoId()
+    body('template').optional().custom((value) => {
+      // Allow built-in templates or MongoDB ObjectId for custom templates
+      const builtIn = ['general', 'cardiac', 'diabetic', 'custom'];
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
+      if (builtIn.includes(value) || isObjectId) {
+        return true;
+      }
+      throw new Error('Template must be general, cardiac, diabetic, or a valid custom template ID');
+    })
   ],
   validate,
   async (req, res) => {
@@ -235,8 +268,27 @@ router.put(
         });
       }
 
+      // Handle template update
+      if (req.body.template) {
+        const builtInTemplates = ['general', 'cardiac', 'diabetic'];
+        
+        // If template is not a built-in one, treat it as a custom template ID
+        if (!builtInTemplates.includes(req.body.template)) {
+          const VitalsTemplate = require('../models/VitalsTemplate');
+          const customTemplate = await VitalsTemplate.findById(req.body.template);
+          
+          if (customTemplate) {
+            patient.template = 'custom';
+            patient.customTemplateId = req.body.template;
+          }
+        } else {
+          patient.template = req.body.template;
+          patient.customTemplateId = null;
+        }
+      }
+
       // Update allowed fields
-      const allowedUpdates = ['name', 'dob', 'gender', 'ward', 'bed', 'consent', 'phone', 'emergencyContact', 'template', 'notes', 'primaryDoctor'];
+      const allowedUpdates = ['name', 'dob', 'gender', 'ward', 'bed', 'consent', 'phone', 'emergencyContact', 'notes', 'primaryDoctor'];
       
       Object.keys(req.body).forEach(key => {
         if (allowedUpdates.includes(key)) {

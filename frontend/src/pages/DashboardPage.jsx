@@ -195,26 +195,28 @@ const DashboardPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <AnimatePresence mode="wait">
             {loading ? (
-              // Loading Skeletons
-              [...Array(4)].map((_, i) => (
-                <motion.div 
-                  key={`skeleton-${i}`} 
-                  className="stat-card"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="skeleton w-10 h-10 rounded-lg" />
-                    <div className="skeleton w-16 h-6 rounded" />
-                  </div>
-                  <div className="skeleton w-24 h-8 rounded mb-2" />
-                  <div className="skeleton w-32 h-4 rounded" />
-                </motion.div>
-              ))
+              <motion.div key="loading" className="contents">
+                {[...Array(4)].map((_, i) => (
+                  <motion.div 
+                    key={`skeleton-${i}`} 
+                    className="stat-card"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="skeleton w-10 h-10 rounded-lg" />
+                      <div className="skeleton w-16 h-6 rounded" />
+                    </div>
+                    <div className="skeleton w-24 h-8 rounded mb-2" />
+                    <div className="skeleton w-32 h-4 rounded" />
+                  </motion.div>
+                ))}
+              </motion.div>
             ) : (
-              statCards.map((stat, index) => {
+              <motion.div key="stats" className="contents">
+                {statCards.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
                   <motion.div
@@ -265,7 +267,7 @@ const DashboardPage = () => {
                     </Link>
                   </motion.div>
                 );
-              })
+              })}\n              </motion.div>
             )}
           </AnimatePresence>
         </div>

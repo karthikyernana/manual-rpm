@@ -201,27 +201,28 @@ const RemindersPage = () => {
         <div className="space-y-3">
           <AnimatePresence mode="wait">
             {loading ? (
-              // Loading Skeletons
-              [...Array(4)].map((_, i) => (
-                <motion.div
-                  key={`skeleton-${i}`}
-                  className="card"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="skeleton w-10 h-10 rounded-lg" />
-                    <div className="flex-1">
-                      <div className="skeleton w-24 h-5 rounded mb-2" />
-                      <div className="skeleton w-48 h-4 rounded mb-2" />
-                      <div className="skeleton w-32 h-3 rounded" />
+              <motion.div key="loading" className="contents">
+                {[...Array(4)].map((_, i) => (
+                  <motion.div
+                    key={`skeleton-${i}`}
+                    className="card"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="skeleton w-10 h-10 rounded-lg" />
+                      <div className="flex-1">
+                        <div className="skeleton w-24 h-5 rounded mb-2" />
+                        <div className="skeleton w-48 h-4 rounded mb-2" />
+                        <div className="skeleton w-32 h-3 rounded" />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                ))}\n              </motion.div>
             ) : reminders.length === 0 ? (
               <motion.div
+                key="empty"
                 className="card empty-state py-16"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -242,7 +243,8 @@ const RemindersPage = () => {
                 </button>
               </motion.div>
             ) : (
-              reminders.map((reminder, index) => {
+              <motion.div key="reminders" className="contents">
+                {reminders.map((reminder, index) => {
                 const priority = getPriorityStyles(reminder.priority);
                 const TypeIcon = getTypeIcon(reminder.type);
 
@@ -310,7 +312,20 @@ const RemindersPage = () => {
                           </Link>
                           <span className="flex items-center gap-1">
                             <Calendar size={14} />
-                            Due: {new Date(reminder.dueDate).toLocaleString()}
+                            Due: {reminder.customTime 
+                              ? new Date(reminder.dueDate).toLocaleString('en-IN', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : new Date(reminder.dueDate).toLocaleDateString('en-IN', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })
+                            }
                           </span>
                           {reminder.snoozedUntil && (
                             <span
@@ -354,7 +369,7 @@ const RemindersPage = () => {
                     </div>
                   </motion.div>
                 );
-              })
+              })}\n              </motion.div>
             )}
           </AnimatePresence>
         </div>

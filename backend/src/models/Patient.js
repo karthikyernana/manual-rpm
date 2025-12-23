@@ -79,8 +79,7 @@ const patientSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for performance
-patientSchema.index({ mrn: 1 });
+// Indexes for performance (mrn already has unique:true which creates index)
 patientSchema.index({ ward: 1, active: 1 });
 patientSchema.index({ primaryNurse: 1 });
 patientSchema.index({ name: 'text' }); // Text search on name

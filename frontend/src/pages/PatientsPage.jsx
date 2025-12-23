@@ -43,6 +43,14 @@ const getTemplateColor = (template) => {
 // Memoized PatientCard component - prevents re-render on parent state changes
 const PatientCard = memo(({ patient, index, isMenuOpen, onMenuToggle, onDelete }) => {
   const templateColor = getTemplateColor(patient.template);
+  
+  // Get display name for template
+  const getTemplateName = () => {
+    if (patient.template === 'custom' && patient.customTemplateId) {
+      return patient.customTemplateId.name || 'Custom';
+    }
+    return patient.template;
+  };
 
   return (
     <motion.div
@@ -89,19 +97,22 @@ const PatientCard = memo(({ patient, index, isMenuOpen, onMenuToggle, onDelete }
             <MoreHorizontal size={16} />
           </button>
 
+          {isMenuOpen && (
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => onMenuToggle(null)}
+            />
+          )}
+
           <AnimatePresence>
             {isMenuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => onMenuToggle(null)}
-                />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-1 w-36 rounded-lg py-1 z-20"
+              <motion.div
+                key="patient-menu"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-1 w-36 rounded-lg py-1 z-20"
                   style={{
                     background: 'var(--bg-elevated)',
                     border: '1px solid var(--border-default)',
@@ -133,7 +144,6 @@ const PatientCard = memo(({ patient, index, isMenuOpen, onMenuToggle, onDelete }
                     Delete
                   </button>
                 </motion.div>
-              </>
             )}
           </AnimatePresence>
         </div>
@@ -148,7 +158,7 @@ const PatientCard = memo(({ patient, index, isMenuOpen, onMenuToggle, onDelete }
             color: templateColor.text
           }}
         >
-          {patient.template}
+          {getTemplateName()}
         </span>
         {!patient.active && (
           <span
@@ -199,6 +209,7 @@ const PatientsPage = () => {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [ward, setWard] = useState(searchParams.get('ward') || '');
   const [statusFilter, setStatusFilter] = useState('active'); // 'all', 'active', 'discharged'
+  const [wards, setWards] = useState([]);
   
   // Sync state when URL params change (e.g. from Navbar search)
   useEffect(() => {
@@ -208,6 +219,23 @@ const PatientsPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 });
   const [activeMenu, setActiveMenu] = useState(null);
+
+  useEffect(() => {
+    fetchWards();
+  }, []);
+
+  const fetchWards = async () => {
+    try {
+      const response = await api.get('/settings/wards');
+      if (response.data.success) {
+        setWards(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching wards:', error);
+      // Fallback to empty array if endpoint not available
+      setWards([]);
+    }
+  };
 
   const fetchPatients = useCallback(async (page = 1) => {
     try {
@@ -268,8 +296,6 @@ const PatientsPage = () => {
   const handleMenuToggle = useCallback((patientId) => {
     setActiveMenu(prev => prev === patientId ? null : patientId);
   }, []);
-
-  const wards = ['ICU-1', 'ICU-2', 'General-1', 'Cardiac', 'Pediatric'];
 
   return (
     <div className="page-container">
@@ -332,7 +358,7 @@ const PatientsPage = () => {
               >
                 <option value="">All Wards</option>
                 {wards.map((w) => (
-                  <option key={w} value={w}>{w}</option>
+                  <option key={w.name} value={w.name}>{w.name}</option>
                 ))}
               </select>
             </div>
@@ -400,31 +426,33 @@ const PatientsPage = () => {
         >
           <AnimatePresence mode="wait">
             {loading ? (
-              // Loading Skeletons
-              [...Array(8)].map((_, i) => (
-                <motion.div
-                  key={`skeleton-${i}`}
-                  className="card"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="skeleton w-10 h-10 rounded-lg" />
-                    <div className="flex-1">
-                      <div className="skeleton w-24 h-4 rounded mb-2" />
-                      <div className="skeleton w-16 h-3 rounded" />
+              <motion.div key="loading" className="contents">
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={`skeleton-${i}`}
+                    className="card"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="skeleton w-10 h-10 rounded-lg" />
+                      <div className="flex-1">
+                        <div className="skeleton w-24 h-4 rounded mb-2" />
+                        <div className="skeleton w-16 h-3 rounded" />
+                      </div>
                     </div>
-                  </div>
-                  <div className="skeleton w-16 h-5 rounded-full mb-4" />
-                  <div className="space-y-2">
-                    <div className="skeleton w-full h-4 rounded" />
-                    <div className="skeleton w-3/4 h-4 rounded" />
-                  </div>
-                </motion.div>
-              ))
+                    <div className="skeleton w-16 h-5 rounded-full mb-4" />
+                    <div className="space-y-2">
+                      <div className="skeleton w-full h-4 rounded" />
+                      <div className="skeleton w-3/4 h-4 rounded" />
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
             ) : patients.length === 0 ? (
               <motion.div
+                key="empty"
                 className="col-span-full card empty-state py-12"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -445,16 +473,18 @@ const PatientsPage = () => {
                 </Link>
               </motion.div>
             ) : (
-              patients.map((patient, index) => (
-                <PatientCard 
-                  key={patient._id} 
-                  patient={patient} 
-                  index={index}
-                  isMenuOpen={activeMenu === patient._id}
-                  onMenuToggle={handleMenuToggle}
-                  onDelete={handleDelete}
-                />
-              ))
+              <motion.div key="patients" className="contents">
+                {patients.map((patient, index) => (
+                  <PatientCard 
+                    key={patient._id} 
+                    patient={patient} 
+                    index={index}
+                    isMenuOpen={activeMenu === patient._id}
+                    onMenuToggle={handleMenuToggle}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </motion.div>
             )}
           </AnimatePresence>
         </div>

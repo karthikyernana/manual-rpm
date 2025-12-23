@@ -9,8 +9,6 @@ import { generatePDF, downloadCSV } from '../utils/export';
 import toast from '../utils/toast';
 import api from '../services/api';
 
-const WARDS = ['ICU-1', 'ICU-2', 'General-1', 'Cardiac', 'Pediatric'];
-
 const PatientDetailPage = () => {
   const { id } = useParams();
   
@@ -24,12 +22,26 @@ const PatientDetailPage = () => {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [trendData, setTrendData] = useState([]);
+  const [wards, setWards] = useState([]);
 
   useEffect(() => {
     fetchPatient();
     fetchVitals();
     fetchTrends();
+    fetchWards();
   }, [id]);
+
+  const fetchWards = async () => {
+    try {
+      const response = await api.get('/settings/wards');
+      if (response.data.success) {
+        setWards(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching wards:', error);
+      setWards([]);
+    }
+  };
 
   const fetchPatient = async () => {
     try {
@@ -702,8 +714,8 @@ const PatientDetailPage = () => {
                   required
                 >
                   <option value="">Select Ward</option>
-                  {WARDS.map(w => (
-                    <option key={w} value={w}>{w}</option>
+                  {wards.map(w => (
+                    <option key={w.name} value={w.name}>{w.name}</option>
                   ))}
                 </select>
               </div>

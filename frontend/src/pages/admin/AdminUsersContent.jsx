@@ -147,27 +147,29 @@ const AdminUsersContent = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence mode="wait">
           {loading ? (
-            // Loading Skeletons
-            [...Array(6)].map((_, i) => (
-              <motion.div
-                key={`skeleton-${i}`}
-                className="card"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="skeleton w-10 h-10 rounded-lg" />
-                  <div className="flex-1">
-                    <div className="skeleton w-24 h-4 rounded mb-2" />
-                    <div className="skeleton w-32 h-3 rounded" />
+            <motion.div key="loading" className="contents">
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={`skeleton-${i}`}
+                  className="card"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="skeleton w-10 h-10 rounded-lg" />
+                    <div className="flex-1">
+                      <div className="skeleton w-24 h-4 rounded mb-2" />
+                      <div className="skeleton w-32 h-3 rounded" />
+                    </div>
                   </div>
-                </div>
-                <div className="skeleton w-16 h-5 rounded-full" />
-              </motion.div>
-            ))
+                  <div className="skeleton w-16 h-5 rounded-full" />
+                </motion.div>
+              ))}
+            </motion.div>
           ) : users.length === 0 ? (
             <motion.div
+              key="empty"
               className="col-span-full card empty-state py-12"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

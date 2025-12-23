@@ -54,21 +54,84 @@ router.get('/stats', async (req, res) => {
 });
 
 // @route   GET /api/v1/vitals/templates
-// @desc    Get all vital templates
+// @desc    Get all vital templates (built-in + user's custom)
 // @access  Private
-router.get('/templates', (req, res) => {
-  const templates = Vitals.getTemplates();
-  res.json({
-    success: true,
-    data: { templates }
-  });
+router.get('/templates', async (req, res) => {
+  try {
+    const builtInTemplates = Vitals.getTemplates();
+    
+    // Fetch user's custom templates
+    const VitalsTemplate = require('../models/VitalsTemplate');
+    const customTemplates = await VitalsTemplate.find({
+      $or: [
+        { isPublic: true },
+        { createdBy: req.user._id }
+      ]
+    }).select('_id name description category');
+    
+    // Combine built-in and custom templates
+    const allTemplates = {
+      ...builtInTemplates,
+      custom: customTemplates.map(ct => ({
+        _id: ct._id,
+        name: ct.name,
+        description: ct.description,
+        category: ct.category
+      }))
+    };
+    
+    res.json({
+      success: true,
+      data: { templates: allTemplates }
+    });
+  } catch (error) {
+    console.error('Get templates error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching templates'
+    });
+  }
 });
 
 // @route   GET /api/v1/vitals/templates/:name
-// @desc    Get specific template
+// @desc    Get specific template (built-in or custom by ID)
 // @access  Private
-router.get('/templates/:name', (req, res) => {
-  const template = Vitals.getTemplate(req.params.name);
+router.get('/templates/:name', async (req, res) => {
+  const { name } = req.params;
+  
+  // Check if it's a MongoDB ObjectId (custom template)
+  if (name.match(/^[0-9a-fA-F]{24}$/)) {
+    try {
+      const VitalsTemplate = require('../models/VitalsTemplate');
+      const customTemplate = await VitalsTemplate.findById(name);
+      
+      if (!customTemplate) {
+        return res.status(404).json({
+          success: false,
+          message: 'Custom template not found'
+        });
+      }
+      
+      // Format to match built-in template structure
+      const template = {
+        name: customTemplate.name,
+        fields: customTemplate.fields
+      };
+      
+      return res.json({
+        success: true,
+        data: { template }
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error fetching custom template'
+      });
+    }
+  }
+  
+  // Otherwise, treat as built-in template
+  const template = Vitals.getTemplate(name);
   
   if (!template) {
     return res.status(404).json({

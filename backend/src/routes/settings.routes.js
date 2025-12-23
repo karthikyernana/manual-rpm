@@ -6,9 +6,8 @@ const { logAudit, ACTIONS } = require('../utils/auditLogger');
 
 const router = express.Router();
 
-// All routes are protected and admin only
-router.use(protect);
-router.use(authorize('admin'));
+// Note: Individual routes specify their own authorization
+// Some routes (like /wards GET) are accessible to all authenticated users
 
 // Validation middleware
 const validate = (req, res, next) => {
@@ -25,7 +24,7 @@ const validate = (req, res, next) => {
 // @route   GET /api/v1/settings
 // @desc    Get system settings
 // @access  Private (Admin only)
-router.get('/', async (req, res) => {
+router.get('/', protect, authorize('admin'), async (req, res) => {
   try {
     const settings = await Settings.getSettings();
     
@@ -47,6 +46,8 @@ router.get('/', async (req, res) => {
 // @access  Private (Admin only)
 router.put(
   '/',
+  protect,
+  authorize('admin'),
   [
     body('defaultVitalsInterval').optional().isIn([1, 2, 4, 6, 8, 12, 24]),
     body('autoGenerateReminders').optional().isBoolean(),
@@ -101,9 +102,9 @@ router.put(
 );
 
 // @route   GET /api/v1/settings/wards
-// @desc    Get all wards
-// @access  Private (Admin only)
-router.get('/wards', async (req, res) => {
+// @desc    Get all active wards (accessible to all authenticated users)
+// @access  Private
+router.get('/wards', protect, async (req, res) => {
   try {
     const settings = await Settings.getSettings();
     
@@ -125,6 +126,8 @@ router.get('/wards', async (req, res) => {
 // @access  Private (Admin only)
 router.post(
   '/wards',
+  protect,
+  authorize('admin'),
   [
     body('name').notEmpty().withMessage('Ward name is required'),
     body('beds').optional().isInt({ min: 1, max: 100 })
@@ -176,6 +179,8 @@ router.post(
 // @access  Private (Admin only)
 router.put(
   '/wards/:name',
+  protect,
+  authorize('admin'),
   [
     body('newName').optional().notEmpty(),
     body('beds').optional().isInt({ min: 1, max: 100 })
