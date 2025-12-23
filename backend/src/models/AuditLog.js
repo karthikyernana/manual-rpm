@@ -10,6 +10,8 @@ const auditLogSchema = new mongoose.Schema({
       'patient_create',
       'patient_update',
       'patient_delete',
+      'patient_discharge',
+      'patient_readmit',
       'patient_view',
       'vitals_record',
       'vitals_update',

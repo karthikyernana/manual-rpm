@@ -52,6 +52,8 @@ const ACTIONS = {
   PATIENT_CREATE: 'patient_create',
   PATIENT_UPDATE: 'patient_update',
   PATIENT_DELETE: 'patient_delete',
+  PATIENT_DISCHARGE: 'patient_discharge',
+  PATIENT_READMIT: 'patient_readmit',
   PATIENT_VIEW: 'patient_view',
   VITALS_RECORD: 'vitals_record',
   VITALS_UPDATE: 'vitals_update',

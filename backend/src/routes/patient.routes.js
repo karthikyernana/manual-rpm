@@ -396,4 +396,170 @@ router.delete('/:id', authorize('admin', 'doctor'), async (req, res) => {
   }
 });
 
+// @route   POST /api/v1/patients/:id/discharge
+// @desc    Discharge patient
+// @access  Private
+router.post(
+  '/:id/discharge',
+  [
+    body('notes').optional().isString().withMessage('Discharge notes must be a string')
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const patient = await Patient.findById(req.params.id);
+
+      if (!patient) {
+        return res.status(404).json({
+          success: false,
+          message: 'Patient not found'
+        });
+      }
+
+      if (patient.status === 'discharged') {
+        return res.status(400).json({
+          success: false,
+          message: 'Patient is already discharged'
+        });
+      }
+
+      // Add current admission to history
+      patient.admissionHistory.push({
+        admittedAt: patient.admissionDate,
+        dischargedAt: new Date(),
+        dischargedBy: req.user._id,
+        ward: patient.ward,
+        bed: patient.bed,
+        dischargeNotes: req.body.notes || ''
+      });
+
+      // Update patient status
+      patient.status = 'discharged';
+      patient.dischargedAt = new Date();
+      patient.dischargedBy = req.user._id;
+      patient.active = false;
+
+      await patient.save();
+
+      // Cascade: Resolve all pending/acknowledged alerts
+      await Alert.updateMany(
+        { patient: patient._id, status: { $in: ['active', 'acknowledged'] } },
+        { 
+          status: 'resolved',
+          resolvedAt: new Date(),
+          resolvedBy: req.user._id,
+          notes: 'Auto-resolved: Patient discharged'
+        }
+      );
+
+      // Cascade: Cancel pending reminders
+      await Reminder.updateMany(
+        { patient: patient._id, status: { $in: ['pending', 'snoozed'] } },
+        { status: 'cancelled' }
+      );
+
+      // Log the discharge
+      await logAudit({
+        action: ACTIONS.PATIENT_DISCHARGE,
+        userId: req.user._id,
+        resourceType: 'patient',
+        resourceId: patient._id,
+        resourceName: patient.name,
+        details: `Discharged patient ${patient.name} (MRN: ${patient.mrn})`,
+        metadata: { dischargeNotes: req.body.notes },
+        req
+      });
+
+      await patient.populate('dischargedBy', 'name email role');
+
+      res.json({
+        success: true,
+        message: 'Patient discharged successfully',
+        data: { patient }
+      });
+    } catch (error) {
+      console.error('Discharge patient error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error discharging patient',
+        error: error.message
+      });
+    }
+  }
+);
+
+// @route   POST /api/v1/patients/:id/readmit
+// @desc    Readmit discharged patient
+// @access  Private
+router.post(
+  '/:id/readmit',
+  [
+    body('ward').notEmpty().withMessage('Ward is required for readmission'),
+    body('bed').optional().isString(),
+    body('notes').optional().isString()
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const patient = await Patient.findById(req.params.id);
+
+      if (!patient) {
+        return res.status(404).json({
+          success: false,
+          message: 'Patient not found'
+        });
+      }
+
+      if (patient.status === 'admitted') {
+        return res.status(400).json({
+          success: false,
+          message: 'Patient is already admitted'
+        });
+      }
+
+      // Update patient for readmission
+      patient.status = 'admitted';
+      patient.active = true;
+      patient.admissionDate = new Date();
+      patient.ward = req.body.ward;
+      patient.bed = req.body.bed || '';
+      patient.dischargedAt = null;
+      patient.dischargedBy = null;
+      
+      if (req.body.notes) {
+        patient.notes = req.body.notes;
+      }
+
+      await patient.save();
+
+      // Log the readmission
+      await logAudit({
+        action: ACTIONS.PATIENT_READMIT,
+        userId: req.user._id,
+        resourceType: 'patient',
+        resourceId: patient._id,
+        resourceName: patient.name,
+        details: `Readmitted patient ${patient.name} (MRN: ${patient.mrn}) to ${req.body.ward}`,
+        metadata: { ward: req.body.ward, bed: req.body.bed, notes: req.body.notes },
+        req
+      });
+
+      await patient.populate('primaryNurse primaryDoctor', 'name email role');
+
+      res.json({
+        success: true,
+        message: 'Patient readmitted successfully',
+        data: { patient }
+      });
+    } catch (error) {
+      console.error('Readmit patient error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error readmitting patient',
+        error: error.message
+      });
+    }
+  }
+);
+
 module.exports = router;

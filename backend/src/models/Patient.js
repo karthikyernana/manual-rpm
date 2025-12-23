@@ -72,6 +72,30 @@ const patientSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  status: {
+    type: String,
+    enum: ['admitted', 'discharged'],
+    default: 'admitted',
+    index: true
+  },
+  dischargedAt: {
+    type: Date
+  },
+  dischargedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  admissionHistory: [{
+    admittedAt: { type: Date, required: true },
+    dischargedAt: { type: Date, required: true },
+    dischargedBy: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'User' 
+    },
+    ward: String,
+    bed: String,
+    dischargeNotes: String
+  }],
   metadata: {
     type: mongoose.Schema.Types.Mixed
   }
