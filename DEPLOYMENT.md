@@ -63,18 +63,52 @@ mongodb+srv://manual-rpm-admin:YOUR_PASSWORD@cluster0.xxxxx.mongodb.net/manual-r
 
 ---
 
-## Step 2: Backend Deployment (Render)
+## Step 2: Prepare Production Scripts
 
-### 2.1 Push Code to GitHub
+### 2.1 Test Admin Seed Script
+
+Before deploying, verify the admin user creation works locally:
+
+```bash
+cd backend
+npm run seed:admin
+```
+
+You should see: ✅ Admin user created successfully!
+
+**Default credentials:**
+- Email: `admin@manual-rpm.com`
+- Password: `Admin@123`
+
+⚠️ **IMPORTANT**: You must change this password after first login!
+
+### 2.2 Test Database Reset (Optional)
+
+If you want to clear test data and start fresh:
+
+```bash
+npm run reset:production
+```
+
+This will:
+1. Drop all collections from your database
+2. Automatically recreate the admin user
+3. Leave you with a clean production-ready database
+
+---
+
+## Step 3: Backend Deployment (Render)
+
+### 3.1 Push Code to GitHub
 
 ```bash
 cd backend
 git add .
-git commit -m "prepare for deployment"
+git commit -m "feat(deploy): add production scripts and admin seeding"
 git push origin main
 ```
 
-### 2.2 Create Web Service on Render
+### 3.2 Create Web Service on Render
 
 1. Go to [Render Dashboard](https://dashboard.render.com)
 2. Click "New +" → "Web Service"
@@ -89,40 +123,64 @@ git push origin main
    - **Start Command**: `npm start`
    - **Instance Type**: Free
 
-### 2.3 Add Environment Variables
+### 3.3 Add Environment Variables
 
 In Render dashboard, add these environment variables:
 
 ```
 MONGODB_URI=<your-mongodb-atlas-connection-string>
 JWT_SECRET=<generate-a-random-32-char-string>
+JWT_EXPIRY=1h
 FRONTEND_URL=https://manual-rpm.vercel.app
 NODE_ENV=production
+PORT=5001
 ```
 
-**Generate JWT Secret:**
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+**Optional (for custom admin password):**
 ```
-
-### 2.4 Deploy
+ADMIN_PASSWORD=<your-secure-password>
+```
+3.4 Deploy
 
 1. Click "Create Web Service"
 2. Wait for deployment (~5 minutes)
 3. Copy your backend URL: `https://manual-rpm-backend.onrender.com`
 
-### 2.5 Test Backend
+### 3.5 Test Backend
 
 Visit: `https://your-backend-url.onrender.com/api/v1/health`
 
 Should return: `{"status":"ok"}`
 
----
+### 3.6 Seed Admin User on Production
 
-## Step 3: Frontend Deployment (Vercel)
+**CRITICAL STEP**: Your production database is empty! Create the admin account.
 
-### 3.1 Create Environment File
+**Option A: Render Shell (Recommended)**
+1. In Render dashboard, click "Shell" tab
+2. Run:
+   ```bash
+   npm run seed:admin
+   ```
+3. ✅ Should see: "Admin user created successfully!"
+4.1 Create Environment File
+
+In `frontend` directory, create `.env.production`:
+
+```
+VITE_API_BASE_URL=https://your-backend-url.onrender.com/api/v1
+```
+
+### 4.2 Push to GitHub
+
+```bash
+cd frontend
+git add .
+git commit -m "feat(deploy): add production API URL"
+git push origin main
+```
+
+### 4.1 Create Environment File
 
 In `frontend` directory, create `.env.production`:
 
@@ -135,18 +193,18 @@ VITE_API_URL=https://your-backend-url.onrender.com/api/v1
 ```bash
 cd frontend
 git add .
-git commit -m "add production env"
-git push origin main
-```
+git commit -m "add producBASE_URL`
+   - **Value**: `https://your-backend-url.onrender.com/api/v1`
 
-### 3.3 Deploy to Vercel
+### 4.4 Deploy
 
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Click "Add New" → "Project"
-3. Import your GitHub repository
-4. Configure:
+1. Click "Deploy"
+2. Wait for build (~2 minutes)
+3. Get your live URL: `https://manual-rpm.vercel.app`
 
-   - **Framework Preset**: Vite
+---
+
+## Step 5: Update CORS & Final Testing
    - **Root Directory**: `frontend`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
@@ -240,11 +298,14 @@ In Render dashboard:
 
 ## 🔐 Security Checklist
 
-- [ ] MongoDB IP whitelist configured
-- [ ] Strong JWT secret (32+ characters)
+- [ ] MongoDB IP whitelist configured (0.0.0.0/0 for cloud hosting)
+- [ ] Strong JWT secret (32+ characters, generated randomly)
+- [ ] Admin password changed from default
 - [ ] `.env` files in `.gitignore`
-- [ ] CORS properly configured
+- [ ] CORS properly configured (specific domain, not *)
 - [ ] HTTPS enabled (automatic on Vercel/Render)
+- [ ] MongoDB connection string not exposed in code
+- [ ] Rate limiting enabled (check backend logs)
 
 ---
 

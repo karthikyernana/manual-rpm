@@ -103,7 +103,7 @@ The `.env` file contains real production credentials:
    JWT_EXPIRY=1h
 
    # Server Configuration
-   PORT=5000
+   PORT=5001
    NODE_ENV=development
    FRONTEND_URL=http://localhost:5173
 
@@ -135,7 +135,7 @@ The `.env` file contains real production credentials:
 Port configuration inconsistency:
 - Backend `.env`: `PORT=3000`
 - Frontend `.env`: `VITE_API_BASE_URL=http://localhost:3000/api/v1`
-- Server.js default: `const PORT = process.env.PORT || 5000`
+- Server.js default: `const PORT = process.env.PORT || 5001`
 
 **Impact:**
 - Frontend API calls may fail with "Network Error"
@@ -147,10 +147,10 @@ Port configuration inconsistency:
 
 ```env
 # backend/.env
-PORT=5000
+PORT=5001
 
 # frontend/.env
-VITE_API_BASE_URL=http://localhost:5000/api/v1
+VITE_API_BASE_URL=http://localhost:5001/api/v1
 ```
 
 **Alternative (if you prefer 3000):**
@@ -166,7 +166,7 @@ VITE_API_BASE_URL=http://localhost:3000/api/v1
 ```json
 {
   "scripts": {
-    "dev": "PORT=5000 nodemon src/server.js",
+    "dev": "PORT=5001 nodemon src/server.js",
     "start": "node src/server.js"
   }
 }
@@ -176,9 +176,9 @@ VITE_API_BASE_URL=http://localhost:3000/api/v1
 ```markdown
 ## Running the Application
 
-Backend runs on: http://localhost:5000
+Backend runs on: http://localhost:5001
 Frontend runs on: http://localhost:5173
-API endpoints: http://localhost:5000/api/v1
+API endpoints: http://localhost:5001/api/v1
 ```
 
 ---
@@ -680,8 +680,8 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 5001,
+      socketTimeoutMS: 45001,
     });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
@@ -703,7 +703,7 @@ const mongoose = require('mongoose');
 
 let isConnected = false;
 
-const connectDB = async (retries = 5, delay = 5000) => {
+const connectDB = async (retries = 5, delay = 5001) => {
   if (isConnected) {
     console.log('✅ Using existing MongoDB connection');
     return;
@@ -713,8 +713,8 @@ const connectDB = async (retries = 5, delay = 5000) => {
     try {
       const conn = await mongoose.connect(process.env.MONGODB_URI, {
         maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
+        serverSelectionTimeoutMS: 5001,
+        socketTimeoutMS: 45001,
         retryWrites: true,
         retryReads: true
       });
@@ -1158,10 +1158,10 @@ No "Forgot Password" functionality. Users locked out must contact admin.
 ```bash
 # Check export routes exist and work
 curl -H "Authorization: Bearer <token>" \
-  http://localhost:5000/api/v1/export/patients/csv
+  http://localhost:5001/api/v1/export/patients/csv
 
 curl -H "Authorization: Bearer <token>" \
-  http://localhost:5000/api/v1/export/patient/:id/vitals/pdf
+  http://localhost:5001/api/v1/export/patient/:id/vitals/pdf
 ```
 
 ---
@@ -1273,7 +1273,7 @@ sharedLinkSchema.index(
   - [ ] Create `.env.example` template
   - [ ] Update README with setup instructions
 - [ ] **#2:** Fix port configuration mismatch
-  - [ ] Choose standard port (5000 recommended)
+  - [ ] Choose standard port (5001 recommended)
   - [ ] Update backend/.env and frontend/.env
   - [ ] Update README
 - [ ] **#3:** Add error handling to Vitals pre-save hook
@@ -1436,7 +1436,7 @@ Before marking production-ready, verify:
 
 ### Immediate Actions (Before ANY Deployment):
 1. **Secure credentials** - check git history, rotate if needed
-2. **Fix port configuration** - standardize on 5000 or 3000
+2. **Fix port configuration** - standardize on 5001 or 3000
 3. **Add Vitals error handling** - prevent data integrity issues
 
 ### Pre-Production (This Week):

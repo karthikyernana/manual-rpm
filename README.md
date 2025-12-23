@@ -12,7 +12,7 @@ A full-stack MERN healthcare application for monitoring patient vitals with real
 - **Reminder System** - Automated scheduling with node-cron, email notifications, and quiet hours support
 - **Real-time Notifications** - Server-Sent Events (SSE) for instant browser notifications
 - **Email Notifications** - Nodemailer integration with professional HTML templates
-- **Sharing System** - Secure JWT links with QR codes (7-day expiration)
+- **Sharing System** - Secure JWT links with QR codes (7-day expiration) with enhanced UI
 - **Export & Reporting** - PDF and CSV exports with formatted reports
 - **Data Visualization** - 7-day trend charts with Recharts
 
@@ -78,7 +78,7 @@ npm install
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_super_secret_jwt_key
 JWT_EXPIRY=1h
-PORT=5000
+PORT=5001
 FRONTEND_URL=http://localhost:5173
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
@@ -96,7 +96,7 @@ cd frontend
 npm install
 
 # Create .env file with:
-VITE_API_BASE_URL=http://localhost:5000/api/v1
+VITE_API_BASE_URL=http://localhost:5001/api/v1
 
 npm run dev
 ```
@@ -104,8 +104,8 @@ npm run dev
 4. **Access Application**
 
 - Frontend: http://localhost:5173
-- Backend: http://localhost:5000
-- Health Check: http://localhost:5000/api/health
+- Backend: http://localhost:5001
+- Health Check: http://localhost:5001/api/health
 
 ### Email Configuration (Optional)
 

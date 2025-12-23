@@ -869,7 +869,7 @@ module.exports = {
 
 ```bash
 # Start your application
-npm run dev  # Backend on 5000
+npm run dev  # Backend on 5001
 cd frontend && npm run dev  # Frontend on 5173
 
 # In new terminal, generate tests
@@ -1190,7 +1190,7 @@ jobs:
         
       - name: Wait for services
         run: |
-          npx wait-on http://localhost:5000/api/health
+          npx wait-on http://localhost:5001/api/health
           npx wait-on http://localhost:5173
           
       - name: Run E2E tests

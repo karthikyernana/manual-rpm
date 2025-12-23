@@ -359,8 +359,8 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       maxPoolSize: 10,  // Max 10 connections (important for free tier)
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 5001,
+      socketTimeoutMS: 45001,
     });
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
@@ -704,12 +704,12 @@ FRONTEND_URL = https://manual-rpm-frontend.vercel.app
 backend/.env:
 MONGODB_URI=mongodb+srv://...@cluster.mongodb.net/manual-rpm-dev
 JWT_SECRET=dev-secret-key
-PORT=5000
+PORT=5001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
 
 frontend/.env:
-VITE_API_BASE_URL=http://localhost:5000/api/v1
+VITE_API_BASE_URL=http://localhost:5001/api/v1
 ```
 
 **Production (Platform dashboards):**

@@ -67,13 +67,13 @@ Follow **Conventional Commits** format:
 MONGODB_URI=mongodb+srv://...
 JWT_SECRET=your-secret-key
 JWT_EXPIRY=1h
-PORT=5000
+PORT=5001
 FRONTEND_URL=http://localhost:5173
 ```
 
 **Frontend `.env` essentials**:
 ```env
-VITE_API_BASE_URL=http://localhost:5000/api/v1
+VITE_API_BASE_URL=http://localhost:5001/api/v1
 ```
 
 ### Running the Application

@@ -10,6 +10,7 @@
 | Template Creation   | ✅ Fixed       | 🔶 Verify       | High     |
 | Patient Discharge   | ✅ Working     | 🔶 Test         | High     |
 | Patient Readmission | ✅ Working     | 🔶 Test         | High     |
+| Share Patient Modal | ✅ Enhanced    | 🔶 Test UI      | High     |
 | Alerts System       | ✅ Working     | 🔶 Test         | High     |
 | Reminders System    | ✅ Working     | 🔶 Test         | Medium   |
 | Share Patient (QR)  | ✅ Working     | 🔶 Test         | Medium   |
@@ -95,6 +96,19 @@
 | ------------------ | ------------------------------------ | ------------------------------------------------ | --------- |
 | Readmit discharged | View discharged patient → Readmit    | Status = "admitted", new admission history entry | [ ]       |
 | New ward/bed       | Select different ward during readmit | Ward updated                                     | [ ]       |
+
+### 2.8 Share Patient Modal (Enhanced UI)
+
+| Test Case            | Steps                                    | Expected Result                    | Pass/Fail |
+| -------------------- | ---------------------------------------- | ---------------------------------- | --------- |
+| Generate share link  | Click Share → Generate Link              | Toast success, link displayed      | [ ]       |
+| Copy link            | Click Copy button                        | Toast "copied", button shows state | [ ]       |
+| QR code display      | Check QR code section                    | QR code renders with styling       | [ ]       |
+| Open link in new tab | Click "Open Link" button                 | New tab opens with share URL       | [ ]       |
+| Modal close          | Click X or Done button                   | Modal closes smoothly              | [ ]       |
+| Loading states       | Observe during link generation           | Spinner shows, button disabled     | [ ]       |
+| Error handling       | Simulate network error                   | Toast error message displayed      | [ ]       |
+| Icons display        | Check all icons (Copy, X, QR, External)  | Icons render properly              | [ ]       |
 
 ---
 

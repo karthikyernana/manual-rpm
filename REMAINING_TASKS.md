@@ -10,6 +10,10 @@
 - [x] Template CRUD endpoints (verified existing)
 - [x] Dashboard routes (verified registered)
 - [x] Pagination limits (verified existing)
+- [x] **Patient discharge workflow** (Added Dec 23, 2025)
+- [x] **Patient readmission workflow** (Added Dec 23, 2025)
+- [x] **SharePatientModal UI improvements** (Added Dec 23, 2025)
+- [x] **Audit logger discharge/readmit actions** (Added Dec 23, 2025)
 
 ---
 

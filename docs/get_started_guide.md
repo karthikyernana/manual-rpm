@@ -285,7 +285,7 @@ cat > .env << EOF
 MONGODB_URI=your-mongodb-connection-string-from-step-2.5
 JWT_SECRET=$(openssl rand -base64 32)
 JWT_EXPIRY=1h
-PORT=5000
+PORT=5001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
 EOF
@@ -365,7 +365,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
@@ -382,11 +382,11 @@ npm run dev
 # You should see:
 # ✅ MongoDB Connected: manual-rpm-cluster-shard-00-00.xxxxx.mongodb.net
 # 📊 Database: manual-rpm
-# 🚀 Server running on port 5000
+# 🚀 Server running on port 5001
 ```
 
 **Step 2.6: Test Health Endpoint**
-- Open browser: http://localhost:5000/api/health
+- Open browser: http://localhost:5001/api/health
 - Should see: `{"status":"OK","message":"Manual-RPM API is running","timestamp":"..."}`
 
 **🎯 COMMIT #2:**
@@ -771,7 +771,7 @@ npm run dev
 
 **Test with Thunder Client in VS Code:**
 1. Open Thunder Client extension
-2. Create new request: POST http://localhost:5000/api/v1/auth/register
+2. Create new request: POST http://localhost:5001/api/v1/auth/register
 3. Body (JSON):
 ```json
 {
@@ -782,7 +782,7 @@ npm run dev
 }
 ```
 4. Send - should get token back
-5. Test login: POST http://localhost:5000/api/v1/auth/login
+5. Test login: POST http://localhost:5001/api/v1/auth/login
 6. Test /me endpoint with token in Authorization header
 
 **🎯 COMMIT #3:**
@@ -863,7 +863,7 @@ export default {
 ```bash
 cd frontend
 cat > .env << EOF
-VITE_API_BASE_URL=http://localhost:5000/api/v1
+VITE_API_BASE_URL=http://localhost:5001/api/v1
 VITE_APP_NAME=Manual-RPM
 EOF
 ```

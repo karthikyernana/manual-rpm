@@ -919,9 +919,14 @@ auditLogSchema.index({ actor: 1, createdAt: -1 });
 - `POST /api/v1/patients` - Create patient
 - `GET /api/v1/patients/:id` - Get patient details
 - `PUT /api/v1/patients/:id` - Update patient
-- `DELETE /api/v1/patients/:id` - Delete patient
-- `POST /api/v1/patients/:id/discharge` - Discharge patient
-- `POST /api/v1/patients/:id/readmit` - Readmit patient
+- `DELETE /api/v1/patients/:id` - Delete patient (soft delete)
+- `POST /api/v1/patients/:id/discharge` - Discharge patient (✅ Implemented)
+  - Body: `{ notes: string (optional) }`
+  - Auto-resolves alerts, cancels reminders
+  - Adds to admission history
+- `POST /api/v1/patients/:id/readmit` - Readmit patient (✅ Implemented)
+  - Body: `{ ward: string (required), bed: string (optional), notes: string (optional) }`
+  - Creates new admission record
 
 **Vitals:**
 - `GET /api/v1/vitals` - List all vitals
@@ -1298,7 +1303,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 JWT_EXPIRY=1h
 
 # Server
-PORT=5000
+PORT=5001
 NODE_ENV=development
 
 # CORS
@@ -1317,7 +1322,7 @@ EMAIL_PASS=your-gmail-app-password
 
 **Frontend (.env):**
 ```env
-VITE_API_BASE_URL=http://localhost:5000/api/v1
+VITE_API_BASE_URL=http://localhost:5001/api/v1
 VITE_APP_NAME=Manual-RPM
 ```
 
