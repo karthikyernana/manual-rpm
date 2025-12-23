@@ -1,24 +1,26 @@
 # Product Requirements Document – Manual-RPM (MongoDB Edition)
 
 **Project:** Manual Remote Patient Monitoring Dashboard - Complete Rebuild  
-**Version:** 2.0.0 (MongoDB Migration)  
-**Author:** Solo Developer  
-**Timeline:** 4 Days (96 Hours)  
-**Start Date:** December 16, 2025  
-**Target Completion:** December 20, 2025  
+**Version:** 3.0.0 (Production Ready)  
+**Author:** Karthik Yernana  
+**Status:** ✅ Completed & Deployed  
+**Completion Date:** December 23, 2025  
 
 ---
 
 ## 🎯 EXECUTIVE SUMMARY
 
-Complete rebuild of Manual-RPM system switching from Supabase to MongoDB, with emphasis on:
-- ✅ Proper Git workflow with frequent commits
-- ✅ Comprehensive testing strategy (CodeRabbit + testSprite + manual)
-- ✅ MongoDB Atlas Free Tier deployment
-- ✅ Solo developer-friendly documentation
-- ✅ Branding and UX polish
+Complete production-ready healthcare monitoring dashboard with advanced features:
+- ✅ Full-stack MERN application with MongoDB Atlas
+- ✅ Real-time notifications via Server-Sent Events (SSE)
+- ✅ Email notifications with Nodemailer
+- ✅ Admin panel with user management & audit logs
+- ✅ System settings with ward/bed management
+- ✅ Patient discharge & readmission workflows
+- ✅ Rate limiting & security hardening
+- ✅ Comprehensive documentation & testing guides
 
-**Core Goal:** Build production-ready healthcare monitoring dashboard in 4 days with proper development practices.
+**Core Achievement:** Built production-grade healthcare monitoring dashboard with enterprise features including notification system, admin controls, and audit trails.
 
 ---
 
@@ -40,30 +42,35 @@ Complete rebuild of Manual-RPM system switching from Supabase to MongoDB, with e
 
 ### Frontend Stack
 ```
-React 18.2+ (JavaScript, NOT TypeScript)
-├── Vite (Build tool & dev server)
-├── Tailwind CSS (Styling)
-├── Shadcn/UI (Component library)
-├── Framer Motion (Animations)
-├── React Router v6 (Navigation)
-├── Axios (HTTP client)
-├── React Hook Form (Form handling)
-├── Recharts (Data visualization)
-└── Lucide React (Icons)
+React 19.2.0 (JavaScript, NOT TypeScript)
+├── Vite 7.2.4 (Build tool & dev server)
+├── Tailwind CSS 3.4.19 (Styling)
+├── Framer Motion 12.23.26 (Animations)
+├── React Router v7.10.1 (Navigation)
+├── Axios 1.13.2 (HTTP client)
+├── React Hot Toast 2.6.0 (Notifications)
+├── Recharts 3.6.0 (Data visualization)
+├── Lucide React 0.561.0 (Icons)
+├── jsPDF 3.0.4 (PDF generation)
+├── jsPDF-AutoTable 5.0.2 (PDF tables)
+└── QRCode 1.5.4 (QR code generation)
 ```
 
 ### Backend Stack
 ```
-Node.js 18+ with Express.js
-├── Mongoose (MongoDB ODM)
-├── bcryptjs (Password hashing)
-├── jsonwebtoken (JWT authentication)
-├── express-validator (Input validation)
-├── helmet (Security headers)
-├── cors (Cross-origin requests)
-├── morgan (HTTP logging)
-├── node-cron (Scheduled tasks)
-└── multer (File uploads - future)
+Node.js 18+ with Express 5.2.1
+├── Mongoose 9.0.1 (MongoDB ODM)
+├── bcryptjs 3.0.3 (Password hashing)
+├── jsonwebtoken 9.0.3 (JWT authentication)
+├── express-validator 7.3.1 (Input validation)
+├── express-rate-limit 8.2.1 (Rate limiting)
+├── helmet 8.1.0 (Security headers)
+├── cors 2.8.5 (Cross-origin requests)
+├── morgan 1.10.1 (HTTP logging)
+├── node-cron 4.2.1 (Scheduled tasks)
+├── nodemailer 7.0.12 (Email notifications)
+├── qrcode 1.5.4 (QR code backend)
+└── validator 13.15.23 (Input validation)
 ```
 
 ### Database
@@ -753,6 +760,231 @@ auditLogSchema.index({ actor: 1, createdAt: -1 });
 
 ---
 
+## 🚀 IMPLEMENTED FEATURES {#features}
+
+### Core Features (Implemented)
+
+**1. Authentication & Authorization**
+- ✅ JWT-based authentication with 1-hour expiry
+- ✅ Role-based access control (Admin, Doctor, Nurse, Coordinator)
+- ✅ Password hashing with bcryptjs (saltRounds: 10)
+- ✅ Password validation (min 8 chars, letter + number)
+- ✅ **Admin-only user registration** (public registration disabled)
+- ✅ Auth middleware with token verification
+- ✅ Protected routes on frontend with redirect
+
+**2. Patient Management**
+- ✅ Full CRUD operations (Create, Read, Update, Delete)
+- ✅ Unique Medical Record Number (MRN) validation
+- ✅ Ward and bed assignment
+- ✅ Primary nurse and doctor assignment
+- ✅ Custom template assignment per patient
+- ✅ **Patient discharge workflow with notes**
+- ✅ **Patient readmission with new ward/bed assignment**
+- ✅ **Admission history tracking**
+- ✅ Patient search and filtering
+- ✅ Active/inactive patient status
+
+**3. Vitals Recording System**
+- ✅ Dynamic form rendering based on templates
+- ✅ Pre-built templates (General, Cardiac, Diabetic)
+- ✅ Custom template creation
+- ✅ Field values stored in flexible Map structure
+- ✅ Automatic alert generation on threshold breach
+- ✅ Vitals history with timeline view
+- ✅ Latest vitals display on patient detail
+- ✅ Vitals trend visualization (7-day charts)
+- ✅ Notes/comments on vitals entries
+- ✅ Recorded by user tracking
+
+**4. Alert System**
+- ✅ Automatic alert creation via rule engine
+- ✅ Severity levels: Low, Medium, High, Critical
+- ✅ Alert workflow: New → Acknowledged → Resolved
+- ✅ Alert filtering by status and severity
+- ✅ Alert acknowledgment with timestamp
+- ✅ Resolution notes capability
+- ✅ **Automatic alert resolution on patient discharge**
+- ✅ Alert badges with color coding
+- ✅ Alert count on dashboard
+
+**5. Reminder System**
+- ✅ Manual reminder creation
+- ✅ **Automated reminder generation (daily 8 AM via node-cron)**
+- ✅ Reminder types: Vitals Due, Medication, Appointment, General
+- ✅ Priority levels: Low, Medium, High
+- ✅ Reminder status: Pending → Sent → Snoozed → Completed
+- ✅ **Email notifications on reminder creation**
+- ✅ **Quiet hours support** (no notifications during quiet hours)
+- ✅ Snooze functionality
+- ✅ Auto-cleanup of overdue reminders (after 7 days)
+- ✅ Custom time scheduling with date/time picker
+
+**6. Dashboard & Analytics**
+- ✅ **Optimized dashboard with single API call**
+- ✅ Real-time statistics: Total patients, active patients, alerts, reminders
+- ✅ **Critical alerts count** (High + Critical severity)
+- ✅ **Overdue reminders count**
+- ✅ Today's vitals recording count
+- ✅ **Ward-wise patient distribution**
+- ✅ Recent activity feed (last 5 vitals)
+- ✅ Quick action buttons
+- ✅ Responsive dashboard cards
+
+**7. Sharing System**
+- ✅ Secure JWT-based share links
+- ✅ QR code generation for easy mobile access
+- ✅ 7-day link expiration
+- ✅ Public patient view (read-only)
+- ✅ Access logging with IP and timestamp
+- ✅ Link revocation capability
+- ✅ Share modal with copy-to-clipboard
+
+**8. Export & Reporting**
+- ✅ PDF export with jsPDF
+- ✅ CSV export functionality
+- ✅ Patient vitals history export
+- ✅ Formatted PDF reports with branding
+- ✅ Auto-table generation for vitals data
+- ✅ Export with date range filtering
+
+**9. Template Management**
+- ✅ Pre-built templates with default thresholds
+- ✅ Custom template creation
+- ✅ Template activation/deactivation
+- ✅ Field configuration (name, type, unit, required)
+- ✅ Threshold settings per field
+- ✅ Template assignment to patients
+- ✅ **Template CRUD operations**
+
+**10. Notification System** (NEW ✨)
+- ✅ **Email notifications via Nodemailer**
+- ✅ **Gmail SMTP integration**
+- ✅ **Professional HTML email templates**
+- ✅ **Reminder notifications to assigned users**
+- ✅ **Server-Sent Events (SSE) for real-time browser notifications**
+- ✅ **SSE subscription endpoint with CORS handling**
+- ✅ **Notification preferences in user settings**
+- ✅ **Automatic/manual notification modes**
+- ✅ **Quiet hours configuration**
+
+**11. Admin Panel** (NEW ✨)
+- ✅ **Admin-only user management interface**
+- ✅ **Create new users (nurses, doctors, admins)**
+- ✅ **View all users with role badges**
+- ✅ **User deletion with confirmation**
+- ✅ **Audit log viewer** (all system actions)
+- ✅ **Audit log filtering** (by user, action, date)
+- ✅ **System-wide activity monitoring**
+
+**12. System Settings** (NEW ✨)
+- ✅ **Ward/bed management system**
+- ✅ **Add/edit/delete wards dynamically**
+- ✅ **Bed configuration per ward**
+- ✅ **Ward statistics** (patient count, occupancy)
+- ✅ **Settings persistence in MongoDB**
+- ✅ **Global configuration management**
+
+**13. Security & Performance**
+- ✅ **Rate limiting on API endpoints** (express-rate-limit)
+- ✅ **Auth rate limiting** (20 req/15min)
+- ✅ **General rate limiting** (500 req/15min)
+- ✅ Input sanitization middleware
+- ✅ Helmet security headers
+- ✅ CORS with origin whitelisting
+- ✅ Body size limits (10kb max)
+- ✅ MongoDB indexes for performance
+- ✅ Query optimization with parallel execution
+
+**14. Audit & Compliance**
+- ✅ **Comprehensive audit logging**
+- ✅ **Action tracking** (CREATE, UPDATE, DELETE, etc.)
+- ✅ **User activity tracking**
+- ✅ **IP address and user agent logging**
+- ✅ **Audit trail for all critical operations**
+- ✅ **Searchable audit logs**
+- ✅ **Date-range filtering**
+
+### API Endpoints (Complete List)
+
+**Authentication:**
+- `POST /api/v1/auth/register` - Register user (Admin only)
+- `POST /api/v1/auth/login` - User login
+- `GET /api/v1/auth/me` - Get current user
+- `GET /api/v1/auth/users` - Get all users (Admin only)
+- `DELETE /api/v1/auth/users/:id` - Delete user (Admin only)
+
+**Patients:**
+- `GET /api/v1/patients` - List all patients
+- `POST /api/v1/patients` - Create patient
+- `GET /api/v1/patients/:id` - Get patient details
+- `PUT /api/v1/patients/:id` - Update patient
+- `DELETE /api/v1/patients/:id` - Delete patient
+- `POST /api/v1/patients/:id/discharge` - Discharge patient
+- `POST /api/v1/patients/:id/readmit` - Readmit patient
+
+**Vitals:**
+- `GET /api/v1/vitals` - List all vitals
+- `POST /api/v1/vitals` - Submit vitals entry
+- `GET /api/v1/vitals/patient/:patientId` - Get patient vitals
+- `GET /api/v1/vitals/patient/:patientId/latest` - Get latest vitals
+- `GET /api/v1/vitals/patient/:patientId/trends` - Get vitals trends
+- `GET /api/v1/vitals/stats` - Get vitals statistics
+- `DELETE /api/v1/vitals/:id` - Delete vitals entry
+
+**Templates:**
+- `GET /api/v1/templates` - List all templates
+- `POST /api/v1/templates` - Create template
+- `GET /api/v1/templates/:id` - Get template
+- `PUT /api/v1/templates/:id` - Update template
+- `DELETE /api/v1/templates/:id` - Delete template
+
+**Alerts:**
+- `GET /api/v1/alerts` - List alerts with filters
+- `PUT /api/v1/alerts/:id/acknowledge` - Acknowledge alert
+- `PUT /api/v1/alerts/:id/resolve` - Resolve alert
+- `DELETE /api/v1/alerts/:id` - Delete alert
+
+**Reminders:**
+- `GET /api/v1/reminders` - List reminders
+- `POST /api/v1/reminders` - Create reminder
+- `PUT /api/v1/reminders/:id/snooze` - Snooze reminder
+- `PUT /api/v1/reminders/:id/complete` - Complete reminder
+- `DELETE /api/v1/reminders/:id` - Delete reminder
+
+**Dashboard:**
+- `GET /api/v1/dashboard/stats` - Get all dashboard statistics
+- `GET /api/v1/dashboard/recent-alerts` - Get recent alerts
+- `GET /api/v1/dashboard/recent-vitals` - Get recent vitals
+
+**Sharing:**
+- `POST /api/v1/share/generate` - Generate share link
+- `GET /api/v1/share/patient/:token` - Get public patient data
+- `DELETE /api/v1/share/:id` - Revoke share link
+
+**Export:**
+- `GET /api/v1/export/patient/:id/pdf` - Export patient PDF
+- `GET /api/v1/export/patient/:id/csv` - Export patient CSV
+
+**Settings:**
+- `GET /api/v1/settings` - Get system settings (Admin)
+- `PUT /api/v1/settings` - Update settings (Admin)
+- `GET /api/v1/settings/wards` - Get wards list
+- `POST /api/v1/settings/wards` - Add ward (Admin)
+- `PUT /api/v1/settings/wards/:name` - Update ward (Admin)
+- `DELETE /api/v1/settings/wards/:name` - Delete ward (Admin)
+
+**Audit:**
+- `GET /api/v1/audit` - Get audit logs (Admin)
+- `GET /api/v1/audit/:id` - Get specific audit log
+
+**Notifications:**
+- `GET /api/v1/notifications/subscribe` - Subscribe to SSE
+- `GET /api/v1/notifications/unread-count` - Get unread count
+- `PUT /api/v1/notifications/:id/read` - Mark notification as read
+
+---
+
 ## 🎨 BRANDING GUIDELINES {#branding}
 
 ### Brand Identity
@@ -1001,17 +1233,20 @@ const buttonTap = {
 
 ### Security Checklist
 ```
-[ ] Passwords hashed with bcrypt (saltRounds: 10)
-[ ] JWT secret in environment variable
-[ ] JWT expiration set (1 hour)
-[ ] Auth middleware validates tokens
-[ ] Input validation on all endpoints
-[ ] SQL injection prevention (Mongoose)
-[ ] XSS prevention (React escapes by default)
-[ ] CORS configured for frontend origin only
-[ ] Helmet middleware applied
-[ ] Rate limiting implemented (future)
-[ ] HTTPS enforced in production
+[✅] Passwords hashed with bcrypt (saltRounds: 10)
+[✅] JWT secret in environment variable
+[✅] JWT expiration set (1 hour)
+[✅] Auth middleware validates tokens
+[✅] Input validation on all endpoints
+[✅] SQL injection prevention (Mongoose)
+[✅] XSS prevention (React escapes by default)
+[✅] CORS configured for frontend origin only
+[✅] Helmet middleware applied
+[✅] Rate limiting implemented (express-rate-limit)
+[✅] Body size limits (10kb max)
+[✅] Input sanitization middleware
+[✅] Admin-only routes protected
+[✅] HTTPS enforced in production
 ```
 
 ### Performance Checklist
@@ -1071,6 +1306,13 @@ FRONTEND_URL=http://localhost:5173
 
 # Scheduler
 SCHEDULER_ENABLED=true
+
+# Email Notifications (Optional - Nodemailer)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-gmail-app-password
 ```
 
 **Frontend (.env):**
@@ -1078,6 +1320,34 @@ SCHEDULER_ENABLED=true
 VITE_API_BASE_URL=http://localhost:5000/api/v1
 VITE_APP_NAME=Manual-RPM
 ```
+
+### Email Configuration (Gmail)
+
+To enable email notifications:
+
+1. **Enable 2-Factor Authentication**
+   - Go to https://myaccount.google.com/security
+   - Enable "2-Step Verification"
+
+2. **Generate App Password**
+   - Go to https://myaccount.google.com/apppasswords
+   - Select "Mail" and "Other (Custom name)"
+   - Enter "Vitalis Notifications"
+   - Copy the 16-character password
+   - Use this as `EMAIL_PASS` (remove spaces)
+
+3. **Update .env file**
+   ```env
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_SECURE=false
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=xxxx xxxx xxxx xxxx  # App password from step 2
+   ```
+
+4. **Test Email**
+   - Create a reminder - you should receive an email
+   - Check spam folder if not in inbox
 
 ### Helpful Commands
 
@@ -1168,7 +1438,7 @@ After completing this 4-day build:
 
 ---
 
-**Document Version:** 2.0.0  
-**Last Updated:** December 16, 2025  
-**Status:** Active Development  
-**Next Review:** December 20, 2025 (Post-deployment)
+**Document Version:** 3.0.0  
+**Last Updated:** December 23, 2025  
+**Status:** ✅ Production Ready  
+**Author:** Karthik Yernana
