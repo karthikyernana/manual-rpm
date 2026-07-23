@@ -310,6 +310,6 @@ npm run dev
 Open your browser and navigate to **`http://localhost:5173`**.
 
 > **Note**: Default Admin Login Credentials created during seeding:
-> - **Username**: `admin`
-> - **Password**: `Admin@123456`
+> - **Email**: `admin@manual-rpm.com` *(or `admin@vitalis.com` for demo seed)*
+> - **Password**: `Admin@123` *(or `Test@123` for demo seed)*
 > *(Be sure to change this password in production environments via the User Settings modal).*
