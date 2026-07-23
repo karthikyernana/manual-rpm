@@ -6,15 +6,48 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 
-// Validate critical environment variables
+
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-  console.error('❌ FATAL: JWT_SECRET must be at least 32 characters');
-  console.error('   Set JWT_SECRET in .env file for security');
+  console.error('\n❌ FATAL ERROR: JWT_SECRET is not properly configured!');
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.error('');
+  console.error('Reason: JWT_SECRET must be at least 32 characters long');
+  console.error('');
+  console.error('To fix this:');
+  console.error('  1. Open backend/.env file');
+  console.error('  2. Update JWT_SECRET with a random 32+ character string');
+  console.error('');
+  console.error('Example:');
+  console.error('  JWT_SECRET=Kj8fH2nP9mQ4rT7sV1wX6yZ3aB5cD0eF2gH4jK7lM9nP1');
+  console.error('');
+  console.error('Or run this command to generate one:');
+  console.error('  node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+  console.error('');
+  console.error('📖 See FRIEND_SETUP_GUIDE.md for detailed instructions');
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   process.exit(1);
 }
 
 if (!process.env.MONGODB_URI) {
-  console.error('❌ FATAL: MONGODB_URI is required');
+  console.error('\n❌ FATAL ERROR: MONGODB_URI is not configured!');
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.error('');
+  console.error('Reason: Database connection string is missing');
+  console.error('');
+  console.error('To fix this:');
+  console.error('  1. Open backend/.env file');
+  console.error('  2. Add MONGODB_URI with your MongoDB connection string');
+  console.error('');
+  console.error('Example:');
+  console.error('  MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/manual-rpm');
+  console.error('');
+  console.error('To get a free MongoDB cluster:');
+  console.error('  1. Go to https://www.mongodb.com/cloud/atlas');
+  console.error('  2. Create a free M0 cluster');
+  console.error('  3. Get your connection string from the Connect button');
+  console.error('');
+  console.error('📖 See FRIEND_SETUP_GUIDE.md for detailed instructions');
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   process.exit(1);
 }
 

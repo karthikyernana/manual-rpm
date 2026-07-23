@@ -1,337 +1,315 @@
-# Manual-RPM - Remote Patient Monitoring System
+# 🏥 Manual-RPM — Remote Patient Monitoring System
 
-A full-stack MERN healthcare application for monitoring patient vitals with real-time alerts, reminders, and comprehensive audit trails.
+![React](https://img.shields.io/badge/React-19.2.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-7.2.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![NodeJS](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5.2.1-000000?style=for-the-badge&logo=express&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-9.0.1-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4.19-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-4.0.16-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
+![Jest](https://img.shields.io/badge/Jest-29.7.0-C21325?style=for-the-badge&logo=jest&logoColor=white)
 
-## 🚀 Features
+---
 
-### Core Features
-- **Authentication & Authorization** - JWT-based auth with role-based access (Admin/Doctor/Nurse/Coordinator)
-- **Patient Management** - Full CRUD with discharge/readmission workflows and admission history
-- **Vitals Tracking** - Dynamic templates (General/Cardiac/Diabetic) with automatic threshold monitoring
-- **Alert System** - Intelligent rule engine with severity-based alerts and workflow management
-- **Reminder System** - Automated scheduling with node-cron, email notifications, and quiet hours support
-- **Real-time Notifications** - Server-Sent Events (SSE) for instant browser notifications
-- **Email Notifications** - Nodemailer integration with professional HTML templates
-- **Sharing System** - Secure JWT links with QR codes (7-day expiration) with enhanced UI
-- **Export & Reporting** - PDF and CSV exports with formatted reports
-- **Data Visualization** - 7-day trend charts with Recharts
+> **Manual-RPM** is an enterprise-grade, full-stack Remote Patient Monitoring solution engineered for hospitals, clinical wards, and healthcare professionals. It resolves the challenge of critical care surveillance by delivering real-time patient vitals tracking, dynamic threshold-monitoring rule engines, automated background reminders, instant Server-Sent Events (SSE) alerts, and comprehensive clinical audit logging—empowering medical teams to intervene proactively and improve patient outcomes.
 
-### Advanced Features
-- **Admin Panel** - User management, audit logs, and system monitoring
-- **System Settings** - Ward/bed management with dynamic configuration
-- **Audit Trail** - Comprehensive logging of all system actions
-- **Dashboard Analytics** - Real-time statistics with optimized single API call
-- **Rate Limiting** - API protection (500 req/15min general, 20 req/15min auth)
-- **Security Hardening** - Helmet, CORS, input sanitization, body size limits
+---
 
-## 📦 Tech Stack
+## ⚡ Key Features & Technical Highlights
 
-**Frontend:**
-- React 19.2.0 + Vite 7.2.4
-- React Router v7.10.1
-- TailwindCSS 3.4.19
-- Framer Motion 12.23.26
-- Recharts 3.6.0
-- React Hot Toast 2.6.0
-- Axios 1.13.2
-- jsPDF 3.0.4 + jsPDF-AutoTable 5.0.2
-- QRCode 1.5.4
-- Lucide React 0.561.0
+- 📡 **Real-Time Event Streaming**: Architected with Server-Sent Events (SSE) to push instant alert notifications to clinical web interfaces without expensive client polling overhead.
+- 🩺 **Intelligent Vitals & Rule Engine**: Evaluates patient physiological data against specialized templates (General, Cardiac, Diabetic) and trigger rule configurations to generate severity-tiered alerts automatically.
+- 🔐 **Defense-in-Depth & Role-Based Security**: Secured with stateless JWT authentication, fine-grained Role-Based Access Control (Admin, Doctor, Nurse, Coordinator), HTTP security headers via Helmet, payload sanitization, and tiered rate limiting.
+- 📊 **Visual Analytics & Clinical Reporting**: Embeds responsive 7-day trend visualizers via Recharts with client-side PDF (`jsPDF-AutoTable`) and CSV report generation engines.
+- ⏰ **Automated Cron Scheduling & Notifications**: Powered by `node-cron` background workers coupled with Nodemailer SMTP integrations for automated medication reminders with quiet-hours support.
+- 🧪 **Dual-Layer Comprehensive Testing**: Verified by client component and utility tests using Vitest (57 passing tests) and server endpoint integration tests powered by Jest.
 
-**Backend:**
-- Node.js 18+ + Express 5.2.1
-- MongoDB 9.0.1 + Mongoose
-- JWT Authentication (jsonwebtoken 9.0.3)
-- bcryptjs 3.0.3
-- Nodemailer 7.0.12
-- node-cron 4.2.1
-- express-rate-limit 8.2.1
-- express-validator 7.3.1
-- Helmet 8.1.0
-- QRCode 1.5.4
-- Validator 13.15.23
+---
 
-## 🛠️ Local Development
+## 📦 Tech Stack Matrix
 
-### Prerequisites
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Frontend UI** | [React 19](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L22) + [Vite 7](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L45) | Component-driven, ultra-fast client single-page application |
+| **Routing & Navigation** | [React Router v7](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L25) | Client-side routing with role-protected route boundaries |
+| **Styling & Motion** | [TailwindCSS 3.4](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L44) + [Framer Motion](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L17) | Utility-first responsive design, glassmorphic UI, smooth micro-interactions |
+| **Data Visualization** | [Recharts 3.6](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L26) | Interactive, multi-metric patient vitals time-series charting |
+| **Document & Share** | [jsPDF](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L18) + [QRCode](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L21) | Client-side clinical PDF report compilation and secure QR code generation |
+| **Backend Runtime** | [Node.js (v18+)](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L7) + [Express 5](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L30) | Scalable REST API server with middleware architecture |
+| **Database & ODM** | [MongoDB 9](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L35) + [Mongoose](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L35) | Document database storing patient records, vitals history, and audit logs |
+| **Auth & Security** | [JWT](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L34), [bcryptjs](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L27), [Helmet](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L33) | Password hashing, token authentication, rate limiting, and HTTP hardening |
+| **Background Processing** | [node-cron](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L37) + [Nodemailer](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L38) | Scheduled reminder execution and automated email notification dispatch |
+| **Test Automation** | [Vitest](file:///Users/karthikyernana/karthikyernana%20/mernpro/frontend/package.json#L46) & [Jest](file:///Users/karthikyernana/karthikyernana%20/mernpro/backend/package.json#L43) | Unit testing, DOM component testing, and REST API integration testing |
 
-- Node.js 18+
-- MongoDB Atlas account (or local MongoDB)
-- Gmail account (for email notifications - optional)
+---
 
-### Setup
+## 🏗️ System Architecture
 
-1. **Clone repository**
+The diagram below illustrates the end-to-end data flow and architectural interaction between the client web layer, Express API server, background services, and storage engines:
 
-```bash
-git clone <your-repo-url>
-cd "karthikyernana /mernpro"
+```mermaid
+flowchart TD
+    subgraph ClientLayer ["Client Layer (React 19 + Vite)"]
+        UI["Web UI Components"]
+        AuthCtx["AuthContext & State"]
+        APIClient["Axios HTTP Client"]
+        SSEConn["SSE Event Listener"]
+    end
+
+    subgraph MiddlewareLayer ["Express Gateway & Security"]
+        RateLimit["Rate Limiter (500 req/15min)"]
+        HelmetSec["Helmet & CORS Security"]
+        JWTAuth["JWT Authenticator & RBAC Guard"]
+        Sanitizer["Payload Sanitizer & Validator"]
+    end
+
+    subgraph ServiceLayer ["Application Services & Logic"]
+        PatientSrv["Patient Management Service"]
+        VitalsSrv["Vitals & Rule Engine Service"]
+        AlertSrv["Alert Dispatcher Service"]
+        CronSrv["Cron Scheduler (node-cron)"]
+        MailSrv["Nodemailer SMTP Manager"]
+        SSESrv["Real-time SSE Broadcaster"]
+    end
+
+    subgraph PersistenceLayer ["Database & External Services"]
+        MongoDB[("MongoDB Database")]
+        SMTP["External SMTP Mailer (Gmail/Custom)"]
+    end
+
+    %% Interactions
+    UI --> AuthCtx
+    AuthCtx --> APIClient
+    APIClient --> RateLimit
+    RateLimit --> HelmetSec
+    HelmetSec --> JWTAuth
+    JWTAuth --> Sanitizer
+
+    Sanitizer --> PatientSrv
+    Sanitizer --> VitalsSrv
+    Sanitizer --> AlertSrv
+
+    VitalsSrv --> SSESrv
+    AlertSrv --> SSESrv
+    SSESrv --> SSEConn
+    SSEConn --> UI
+
+    CronSrv --> MailSrv
+    MailSrv --> SMTP
+
+    PatientSrv --> MongoDB
+    VitalsSrv --> MongoDB
+    AlertSrv --> MongoDB
+    CronSrv --> MongoDB
 ```
 
-2. **Backend Setup**
+---
 
-```bash
-cd backend
-npm install
+## 🗺️ Categorized Feature Overview
 
-# Create .env file with the following:
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_super_secret_jwt_key
-JWT_EXPIRY=1h
-PORT=5001
-FRONTEND_URL=http://localhost:5173
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-gmail-app-password
+### 1. 📋 Patient & Clinical Care Management
+- **Dashboard Overview** (`/dashboard`): Real-time ward metrics, recent alerts counter, active patient count, and system status widgets.
+- **Patient Registry** (`/patients`): Full CRUD workflow, ward/bed assignments, primary physician tracking, and quick filter search.
+- **Detailed Patient File** (`/patients/:id`): Complete medical history, admission/discharge state machine, historical vitals charts, and rule configuration.
+- **Secure Link Sharing**: Public view link (`/public/share/:token`) protected by expiring JWT tokens and downloadable QR codes for temporary clinical access.
 
-npm run dev
-```
+### 2. 🩺 Vitals Monitoring & Alert Engine
+- **Vitals Logger**: Support for dynamic templates (General, Cardiac, Diabetic) capturing HR, BP, SpO2, Temperature, Blood Glucose, and Respiratory Rate.
+- **Alert Center** (`/alerts`): Centralized list of auto-generated high, medium, and low severity alerts with status transitions (`NEW` -> `ACKNOWLEDGED` -> `RESOLVED`).
+- **Real-Time Push**: Server-Sent Events notify online nurses and doctors immediately when a critical threshold is breached.
 
-3. **Frontend Setup** (new terminal)
+### 3. ⏰ Reminders & Email Notifications
+- **Automated Scheduling** (`/reminders`): Configurable medication and check-up reminders with support for quiet-hours suppression.
+- **SMTP Notifications**: Automated email dispatches formatted with clean HTML templates.
 
-```bash
-cd frontend
-npm install
+### 4. 🔒 Authentication, Security & Governance
+- **Role-Based Auth** (`/login`): Secure authentication supporting `Admin`, `Doctor`, `Nurse`, and `Coordinator` roles.
+- **User Administration** (`/admin/users`): Managed registration flow (public registration disabled; accounts created securely by Administrators).
+- **Audit Logging** (`/admin/audit-logs`): Comprehensive event logging capturing user ID, IP address, exact action, timestamp, and target resource.
+- **System Settings** (`/settings`): Dynamic ward definitions, bed management, and global alert defaults.
 
-# Create .env file with:
-VITE_API_BASE_URL=http://localhost:5001/api/v1
+---
 
-npm run dev
-```
-
-4. **Access Application**
-
-- Frontend: http://localhost:5173
-- Backend: http://localhost:5001
-- Health Check: http://localhost:5001/api/health
-
-### Email Configuration (Optional)
-
-To enable email notifications:
-
-1. Enable 2FA on your Gmail account
-2. Generate an App Password at https://myaccount.google.com/apppasswords
-3. Add credentials to backend `.env` file
-4. Test by creating a reminder
-
-### Default Admin Account
-
-**IMPORTANT**: Public registration is disabled. Only admins can create users.
-
-To create the first admin, temporarily enable public registration or use seed data.
-
-## 📁 Project Structure
+## 📁 Project Directory Tree
 
 ```
 mernpro/
 ├── backend/
 │   ├── src/
-│   │   ├── models/         # Mongoose models
-│   │   ├── routes/         # API routes
-│   │   ├── middleware/     # Auth & validation
-│   │   ├── services/       # Business logic (scheduler)
-│   │   ├── utils/          # Helpers (JWT)
-│   │   ├── config/         # Database config
-│   │   └── server.js       # Entry point
-│   ├── package.json
-│   └── .env
+│   │   ├── config/             # Database connection & env configurations
+│   │   ├── middleware/         # Auth, RBAC, error handler, rate limiters
+│   │   ├── models/             # Mongoose schemas (Patient, Vitals, Alert, Reminder, User, AuditLog, SystemSetting)
+│   │   ├── routes/             # API route controllers (vitals, alert, patient, auth, admin, etc.)
+│   │   ├── services/           # Email service, rule engine, scheduler
+│   │   ├── utils/              # SSE broadcaster, logger, formatters
+│   │   └── server.js           # Express app initialization & server entry
+│   ├── scripts/                # Database seeding & administrative scripts
+│   ├── tests/                  # API integration & unit test suites (Jest)
+│   ├── .env.example            # Environment configuration template
+│   ├── jest.config.js          # Jest runner configuration
+│   └── package.json            # Node backend dependencies & scripts
 ├── frontend/
 │   ├── src/
-│   │   ├── components/     # Reusable components
-│   │   ├── pages/          # Route pages
-│   │   ├── context/        # Auth context
-│   │   ├── services/       # API service
-│   │   ├── utils/          # Export utilities
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── package.json
-│   └── .env
-└── README.md
+│   │   ├── assets/             # Branding icons & image resources
+│   │   ├── components/         # Modular UI components (Navbar, Modal, SharePatientModal, etc.)
+│   │   ├── context/            # AuthContext & global React providers
+│   │   ├── pages/              # Primary route views (Dashboard, Patients, PatientDetail, Alerts, etc.)
+│   │   ├── services/           # Axios instance & API endpoint services
+│   │   ├── styles/             # Tailwind & custom CSS utility declarations
+│   │   ├── utils/              # Data validators, formatters, PDF/CSV generators
+│   │   ├── App.jsx             # Main routing & layout controller
+│   │   └── main.jsx            # React root mount point
+│   ├── tests/                  # Vitest UI component & utility test suites
+│   ├── .env.example            # Frontend environment template
+│   ├── vite.config.js          # Vite bundler configuration
+│   └── package.json            # Frontend dependencies & scripts
+├── setup-env.sh                # Automated setup script (macOS/Linux)
+├── setup-env.bat               # Automated setup script (Windows)
+└── README.md                   # System documentation
 ```
-
-## 🚀 Deployment
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed production deployment instructions.
-
-**Quick Deploy:**
-
-- **Backend**: Deploy to [Render](https://render.com)
-- **Frontend**: Deploy to [Vercel](https://vercel.com)
-- **Database**: [MongoDB Atlas](https://mongodb.com/atlas)
-
-## 📝 API Documentation
-
-### Authentication
-- `POST /api/v1/auth/register` - Register user (Admin only)
-- `POST /api/v1/auth/login` - User login
-- `GET /api/v1/auth/me` - Get current user
-- `GET /api/v1/auth/users` - List all users (Admin)
-- `DELETE /api/v1/auth/users/:id` - Delete user (Admin)
-
-### Patients
-- `GET /api/v1/patients` - List patients
-- `POST /api/v1/patients` - Create patient
-- `GET /api/v1/patients/:id` - Get patient details
-- `PUT /api/v1/patients/:id` - Update patient
-- `DELETE /api/v1/patients/:id` - Delete patient
-- `POST /api/v1/patients/:id/discharge` - Discharge patient
-- `POST /api/v1/patients/:id/readmit` - Readmit patient
-
-### Vitals
-- `POST /api/v1/vitals` - Record vitals
-- `GET /api/v1/vitals/patient/:id` - Get patient vitals history
-- `GET /api/v1/vitals/patient/:id/latest` - Get latest vitals
-- `GET /api/v1/vitals/patient/:id/trends` - Get trend charts data
-- `GET /api/v1/vitals/stats` - Get vitals statistics
-- `DELETE /api/v1/vitals/:id` - Delete vitals entry
-
-### Templates
-- `GET /api/v1/templates` - List all templates
-- `POST /api/v1/templates` - Create custom template
-- `GET /api/v1/templates/:id` - Get template details
-- `PUT /api/v1/templates/:id` - Update template
-- `DELETE /api/v1/templates/:id` - Delete template
-
-### Alerts
-- `GET /api/v1/alerts` - List alerts (with filters)
-- `PUT /api/v1/alerts/:id/acknowledge` - Acknowledge alert
-- `PUT /api/v1/alerts/:id/resolve` - Resolve alert
-- `DELETE /api/v1/alerts/:id` - Delete alert
-
-### Reminders
-- `GET /api/v1/reminders` - List reminders
-- `POST /api/v1/reminders` - Create reminder
-- `PUT /api/v1/reminders/:id/snooze` - Snooze reminder
-- `PUT /api/v1/reminders/:id/complete` - Complete reminder
-- `DELETE /api/v1/reminders/:id` - Delete reminder
-
-### Dashboard
-- `GET /api/v1/dashboard/stats` - Get all dashboard statistics
-
-### Sharing
-- `POST /api/v1/share/generate` - Generate share link
-- `GET /api/v1/share/patient/:token` - Public patient view
-- `DELETE /api/v1/share/:id` - Revoke share link
-
-### Export
-- `GET /api/v1/export/patient/:id/pdf` - Download PDF report
-- `GET /api/v1/export/patient/:id/csv` - Download CSV data
-
-### Settings (Admin)
-- `GET /api/v1/settings` - Get system settings
-- `PUT /api/v1/settings` - Update settings
-- `GET /api/v1/settings/wards` - Get wards list
-- `POST /api/v1/settings/wards` - Add ward
-- `PUT /api/v1/settings/wards/:name` - Update ward
-- `DELETE /api/v1/settings/wards/:name` - Delete ward
-
-### Audit (Admin)
-- `GET /api/v1/audit` - Get audit logs with filters
-
-### Notifications
-- `GET /api/v1/notifications/subscribe` - Subscribe to SSE
-- `GET /api/v1/notifications/unread-count` - Get unread notifications count
-
-## 🔒 Security Features
-
-- **Rate Limiting**: 500 requests per 15 minutes (general), 20 requests per 15 minutes (auth)
-- **Authentication**: JWT with 1-hour expiry
-- **Password Security**: bcrypt hashing with salt rounds of 10
-- **Input Validation**: express-validator on all endpoints
-- **Input Sanitization**: Custom middleware to prevent XSS
-- **Security Headers**: Helmet middleware
-- **CORS**: Origin whitelisting
-- **Body Size Limits**: 10kb maximum to prevent large payload attacks
-- **NoSQL Injection Prevention**: Mongoose schema validation
-
-## 📊 Key Features Explained
-
-### Real-time Notifications
-The application uses Server-Sent Events (SSE) for real-time browser notifications. When a reminder is created or an alert is triggered, users receive instant notifications without polling.
-
-### Email Integration
-Automated email notifications using Nodemailer with professional HTML templates. Supports Gmail SMTP with App Password authentication.
-
-### Patient Workflows
-Complete patient lifecycle management:
-- **Admission**: Create patient with ward/bed assignment
-- **Monitoring**: Record vitals, view trends, manage alerts
-- **Discharge**: Discharge with notes, automatic alert resolution
-- **Readmission**: Readmit with new ward/bed, track admission history
-
-### Alert Rule Engine
-Intelligent alert generation based on vitals thresholds:
-- Automatic severity calculation (Low/Medium/High/Critical)
-- Configurable thresholds per template field
-- Alert workflow (New → Acknowledged → Resolved)
-- Auto-resolution on patient discharge
-
-### Audit Trail
-Comprehensive logging of all system actions for compliance:
-- User actions tracked (CREATE, UPDATE, DELETE, LOGIN, etc.)
-- IP address and user agent logging
-- Searchable audit logs with date filtering
-- Admin-only access
-
-## 📚 Documentation
-
-- [PRD (Product Requirements Document)](./docs/prd_mongodb.md) - Complete technical specification
-- [Get Started Guide](./docs/get_started_guide.md) - Step-by-step implementation
-- [Testing Guide](./docs/testing_guide.md) - Comprehensive testing strategy
-- [Deployment Guide](./docs/deploy_brand_guide.md) - Production deployment & branding
-- [Email Notifications Guide](./docs/EMAIL_NOTIFICATIONS.md) - Email setup instructions
-- [Start Here](./docs/start_here.md) - Central navigation hub
-- [Comprehensive Testing Checklist](./COMPREHENSIVE_TESTING_GUIDE.md) - Complete testing checklist
-- [Testing Checklist](./TESTING_CHECKLIST.md) - Quick testing reference
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the ISC License.
-
-## 👤 Author
-
-**Karthik Yernana**
-- GitHub: [@karthikyernana](https://github.com/karthikyernana)
-- Email: karthikyernana@gmail.com
-
-## 🙏 Acknowledgments
-
-- Built with MERN stack (MongoDB, Express, React, Node.js)
-- Icons by [Lucide React](https://lucide.dev/)
-- Charts by [Recharts](https://recharts.org/)
-- Animations by [Framer Motion](https://www.framer.com/motion/)
-- Styling by [Tailwind CSS](https://tailwindcss.com/)
 
 ---
 
-**Version**: 3.0.0  
-**Status**: ✅ Production Ready  
-**Last Updated**: December 23, 2025
+## 🧪 Testing & Code Quality
 
-- `GET /api/v1/export/patient/:id/data` - Get PDF data
+The project maintains high code reliability across both frontend and backend modules with comprehensive unit and integration testing:
 
-## 🧪 Testing
+### Client Unit & Integration Test Suite (Vitest)
 
-All features have been manually tested. See `day3_testing_checklist.md` for comprehensive test scenarios.
+```bash
+ RUN  v4.0.16 /frontend
 
-## 📜 License
+ ✓ tests/utils/validation.test.js (51 tests)
+ ✓ tests/pages/LoginPage.test.jsx (4 tests)
+ ✓ tests/components/Navbar.test.jsx (2 tests)
 
-MIT
+ Test Files  3 passed (3)
+      Tests  57 passed (57)
+   Duration  838ms
+```
 
-## 👥 Author
+To run the test suites locally:
 
-Karthik Yernana
+```bash
+# Run Frontend Tests (Vitest)
+cd frontend
+npm test
 
-## 🎯 Version
+# Run Backend Integration Tests (Jest)
+cd backend
+npm test
+```
 
-v0.3.0-rc (Day 3 Complete)
+---
+
+## 🚀 Getting Started & Setup Guide
+
+### 📋 Prerequisites
+
+Ensure your development environment meets the following requirements:
+- **Node.js**: `v18.0.0` or higher
+- **npm**: `v9.0.0` or higher
+- **MongoDB**: Local instance running on `mongodb://localhost:27017` or a **MongoDB Atlas** connection URI
+- **SMTP Account** *(Optional)*: Gmail App Password or custom SMTP server for email notifications
+
+---
+
+### ⚡ Quick Automated Setup
+
+Run the interactive environment setup script to automatically copy `.env.example` files into place:
+
+**macOS / Linux:**
+```bash
+chmod +x setup-env.sh
+./setup-env.sh
+```
+
+**Windows:**
+```cmd
+setup-env.bat
+```
+
+---
+
+### 🛠️ Manual Step-by-Step Installation
+
+#### 1️⃣ Clone the Repository
+```bash
+git clone https://github.com/your-username/manual-rpm.git
+cd manual-rpm
+```
+
+#### 2️⃣ Configure Backend Environment
+Navigate to the `backend` directory, install dependencies, and create `.env`:
+
+```bash
+cd backend
+npm install
+```
+
+Create `backend/.env` with the following variables:
+
+```env
+# Server Configuration
+PORT=5001
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# Database Connection
+MONGODB_URI=mongodb://localhost:27017/manual-rpm
+
+# JWT Security Credentials
+JWT_SECRET=your_super_secret_jwt_access_key_here
+JWT_EXPIRY=1h
+
+# SMTP Email Notification Service (Optional)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your_email_address_here@gmail.com
+EMAIL_PASS=your_smtp_app_password_here
+```
+
+#### 3️⃣ Seed Administrative User
+Run the seeding script to create the initial Administrator account:
+
+```bash
+npm run seed:admin
+```
+
+#### 4️⃣ Configure Frontend Environment
+In a new terminal window, navigate to `frontend`, install dependencies, and set up `.env`:
+
+```bash
+cd frontend
+npm install
+```
+
+Create `frontend/.env`:
+
+```env
+VITE_API_BASE_URL=http://localhost:5001/api/v1
+```
+
+---
+
+### 🏃 Running Local Development Servers
+
+Start the backend API server and frontend development server concurrently:
+
+```bash
+# Terminal 1: Backend API (http://localhost:5001)
+cd backend
+npm run dev
+
+# Terminal 2: Frontend App (http://localhost:5173)
+cd frontend
+npm run dev
+```
+
+Open your browser and navigate to **`http://localhost:5173`**.
+
+> **Note**: Default Admin Login Credentials created during seeding:
+> - **Username**: `admin`
+> - **Password**: `Admin@123456`
+> *(Be sure to change this password in production environments via the User Settings modal).*
